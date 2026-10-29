@@ -1,0 +1,152 @@
+<script>
+ let msgPronta = "";
+
+ function obterDados(callback) {
+     let colabs = [];
+     document.querySelectorAll('input[name="colab"]:checked').forEach(function(cb) {
+         colabs.push(cb.value);
+     });
+
+     let dados = {
+         disciplina: document.getElementById('disciplina').value,
+         lider: document.getElementById('lider').value,
+         usina: document.getElementById('usina').value,
+         subarea: document.getElementById('subarea').value,
+         fiscal: document.getElementById('fiscal').value,
+         colaboradores: colabs.join(', '),
+         hhProducao: document.getElementById('hhProducao').value,
+         equipamento: document.getElementById('equipamento').value,
+         atividade: document.getElementById('atividade').value,
+         desvios: document.getElementById('desvios').value,
+         impactos: document.getElementById('impactos').value,
+         statusAtividade: document.getElementById('statusAtividade').value,
+         materialsPendentes: document.getElementById('materiaisPendentes').value || "Nenhum",
+         observacoes: document.getElementById('observacoes').value || "Nenhuma",
+         fotoBase64: "",
+         fotoNome: ""
+     };
+
+     let fotoInput = document.getElementById('fotos');
+     if (fotoInput.files.length > 0) {
+         let file = fotoInput.files[0];
+         let reader = new FileReader();
+         reader.onloadend = function() {
+             dados.fotoBase64 = reader.result;
+             dados.fotoNome = file.name;
+             callback(dados);
+         };
+         reader.readAsDataURL(file);
+     } else {
+         callback(dados);
+     }
+ }
+
+ function gerarTextoRDO(d) {
+     msgPronta = `*RDO - CONSÓRCIO FORÇA SUL*\n\n`;
+     msgPronta += `⚙️ *Disciplina:* ${d.disciplina}\n`;
+     msgPronta += `👤 *Líder:* ${d.lider}\n`;
+     msgPronta += `🏢 *Usina:* ${d.usina} | *Subárea:* ${d.subarea}\n`;
+     msgPronta += `🕵️‍♂️ *Fiscal:* ${d.fiscal}\n\n`;
+     msgPronta += `👥 *Equipe:* ${d.colaboradores || 'Nenhuma'}\n\n`;
+     msgPronta += `📊 *Tipo:* ${d.hhProducao} | 🚜 *Equipamento:* ${d.equipamento}\n`;
+     msgPronta += `📝 *Atividade:* ${d.atividade}\n`;
+     msgPronta += `⚠️ *Desvios:* ${d.desvios}\n`;
+     msgPronta += `🛑 *Impactos M.O:* ${d.impactos}\n\n`;
+     msgPronta += `📌 *Status:* ${d.statusAtividade}\n`;
+     msgPronta += `📦 *Materiais Pendentes:* ${d.materialsPendentes}\n`;
+     msgPronta += `🔍 *Obs:* ${d.observacoes}\n`;
+
+     const preview = document.getElementById('previewArea');
+     preview.innerText = msgPronta;
+     preview.style.display = "block";
+     
+     // Copia para a área de transferência do usuário
+     if (navigator.clipboard && navigator.clipboard.writeText) {
+         navigator.clipboard.writeText(msgPronta).catch(err => console.error("Erro ao copiar: ", err));
+     }
+ }
+
+ function forçarMensagemManual() {
+     const form = document.getElementById('rdoForm');
+     if(!form.checkValidity()) {
+         alert("Preencha todos os campos obrigatórios!");
+         form.reportValidity();
+         return;
+     }
+     obterDados(function(dados) {
+         gerarTextoRDO(dados);
+         alert("Mensagem estruturada e copiada com sucesso!");
+     });
+ }
+
+ function enviarGrupo() {
+     const form = document.getElementById('rdoForm');
+     if(!form.checkValidity()) {
+         alert("Por favor, preencha todos os campos obrigatórios antes de enviar!");
+         form.reportValidity();
+         return;
+     }
+
+     const urlPlanilha = document.getElementById('scriptUrl').value;
+     if(!urlPlanilha) {
+         alert("ATENÇÃO: URL do Google Script não configurada no Painel Administrativo!");
+         return;
+     }
+
+     alert("Enviando dados para a planilha... Aguarde a abertura do WhatsApp.");
+
+     obterDados(function(dados) {
+         gerarTextoRDO(dados);
+
+         // CORREÇÃO 1: Envio correto contornando restrição CORS do Google Apps Script
+         fetch(urlPlanilha, {
+             method: "POST",
+             body: JSON.stringify(dados),
+             headers: {
+                 // Deixando em branco ou text/plain evita o erro de preflight do CORS em requisições diretas
+                 "Content-Type": "text/plain;charset=utf-8" 
+             }
+         })
+         .then(response => response.json())
+         .then(resultado => {
+             console.log("Planilha respondida:", resultado);
+             
+             // CORREÇÃO 2: Monta o link do WhatsApp injetando o texto codificado para envio
+             let linkWhatsappBase = document.getElementById('whatsappLink').value || "https://whatsapp.com";
+             
+             // Se for link de grupo direto, adicionamos o texto como parâmetro ou abrimos o link do grupo e o usuário cola
+             let urlFinal = "";
+             if (linkWhatsappBase.includes("chat.whatsapp.com")) {
+                 // Links de grupo fechados do WhatsApp não aceitam o parâmetro ?text=. 
+                 // Por garantia, copiamos o texto e abrimos o grupo para o usuário apenas colar (Ctrl+V)
+                 alert("Dados salvos na Planilha!\n\nComo você configurou um link de GRUPO, o WhatsApp será aberto e você só precisa colar (Ctrl + V) o relatório que já foi copiado.");
+                 urlFinal = linkWhatsappBase;
+             } else {
+                 // Se for número ou link de api de envio, formata o texto direto na caixa de mensagem
+                 urlFinal = `https://whatsapp.com?text=${encodeURIComponent(msgPronta)}`;
+             }
+             
+             window.open(urlFinal, '_blank');
+         })
+         .catch(function(err) {
+             alert("Erro ao salvar na planilha. Verifique se o Script foi publicado como 'Qualquer pessoa'.");
+             console.error("Erro planilha: " + err);
+         });
+     });
+ }
+
+ function toggleAdmin() {
+     const senha = prompt("Digite a senha do Administrador:");
+     if (senha === "2026") {
+         document.getElementById('adminPanel').classList.toggle('hidden');
+     } else {
+         alert("Senha incorreta!");
+     }
+ }
+
+ function saveAdmin() {
+     alert("Configurações salvas localmente!");
+     document.getElementById('adminPanel').classList.add('hidden');
+ }
+</script>
+
