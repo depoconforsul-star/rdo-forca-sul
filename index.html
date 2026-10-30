@@ -276,7 +276,7 @@
         .catch(err => console.error("Erro ao carregar banco de dados: " + err));
     }
 
-    function preencherDropdown(id, lista) {
+        function preencherDropdown(id, lista) {
         const select = document.getElementById(id);
         select.length = 1; 
         if (lista) {
@@ -287,6 +287,7 @@
             });
         }
     }
+
 
     function obterDados(callback) {
         let colabs = [];
