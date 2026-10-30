@@ -79,12 +79,10 @@
         .checkbox-group { max-height: 200px; overflow-y: auto; border: 1px solid var(--border); padding: 10px; border-radius: 4px; background: #fafafa; }
         .checkbox-item { display: flex; align-items: center; margin-bottom: 8px; }
         .checkbox-item input { margin-right: 10px; }
-        .btn-group { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
         button.main-btn { padding: 14px 10px; border: none; border-radius: 4px; font-size: 13px; font-weight: bold; cursor: pointer; transition: 0.2s; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .btn-blue { background-color: var(--logo-blue); }
         .btn-blue:hover { background-color: #003d82; }
-        .btn-orange { background-color: var(--logo-orange); }
-        .btn-orange:hover { background-color: #d46500; }
         .btn-green { background-color: var(--logo-green); }
         .btn-green:hover { background-color: #008040; }
         #previewArea { background: #e9ecef; padding: 15px; border-radius: 4px; white-space: pre-wrap; font-family: monospace; font-size: 13px; display: none; margin-bottom: 15px; border: 1px dashed #adb5bd; }
@@ -94,262 +92,182 @@
 </head>
 <body>
 <div class="container">
-    <div class="header-card">
-        <button class="admin-btn" onclick="toggleAdmin()">Acessar Painel</button>
-        <img src="logo.png" alt="Logo Força Sul" class="brand-logo" onerror="this.style.display='none'">
-        <div class="header-text">
-            <h1>RDO - Consórcio Força Sul</h1>
-            <p>Relatório Diário de Obra - Controle Operacional</p>
-        </div>
-    </div>
-    <div id="adminPanel" class="card admin-panel hidden">
-        <h3>Configurações do Administrador</h3>
-        <label>URL do App da Web (Google Script):</label>
-        <input type="text" id="scriptUrl" placeholder="Link da planilha" style="margin-bottom: 10px;">
-        <label>Link do Grupo WhatsApp:</label>
-        <input type="text" id="whatsappLink" value="https://whatsapp.com" style="margin-bottom: 10px;">
-        <button onclick="saveAdmin()" style="padding: 8px 15px; background: var(--logo-blue); color: white; border: none; border-radius: 4px; cursor: pointer;">Salvar</button>
-    </div>
-    <form id="rdoForm" onsubmit="event.preventDefault();">
-        <div class="card border-blue">
-            <h3>Disciplina <span>*</span></h3>
-            <div class="tip-box">💡 Escolha o setor de engenharia responsável pela atividade técnica.</div>
-            <select id="disciplina" required>
-                <option value="">Escolher</option>
-                <option value="Civil">Civil</option>
-                <option value="Elétrica">Elétrica</option>
-                <option value="Mecânica">Mecânica</option>
-            </select>
-        </div>
-
-        <div class="card border-blue">
-            <h3>Líder / Encarregado <span>*</span></h3>
-            <div class="tip-box">💡 Selecione o supervisor responsável pela execução direta do serviço.</div>
-            <select id="lider" required>
-                <option value="">Escolher</option>
-                <option value="Líder 1">Líder 1</option>
-                <option value="Líder 2">Líder 2</option>
-            </select>
-        </div>
-
-        <div class="card border-blue">
-            <h3>Usina <span>*</span></h3>
-            <div class="tip-box">💡 Marque a unidade fabril/operacional onde a frente está alocada.</div>
-            <select id="usina" required>
-                <option value="">Escolher</option>
-                <option value="Usina A">Usina A</option>
-                <option value="Usina B">Usina B</option>
-            </select>
-        </div>
-
-        <div class="card border-blue">
-            <h3>Subárea <span>*</span></h3>
-            <div class="tip-box">💡 Especifique o local exato ou subsetor da atividade dentro da Usina.</div>
-            <select id="subarea" required>
-                <option value="">Escolher</option>
-                <option value="Área Inicial">Área Inicial</option>
-                <option value="Área Secundária">Área Secundária</option>
-            </select>
-        </div>
-
-        <div class="card border-blue">
-            <h3>Fiscal <span>*</span></h3>
-            <div class="tip-box">💡 Informe o fiscal do cliente/consórcio mapeado para validação.</div>
-            <select id="fiscal" required>
-                <option value="">Escolher</option>
-                <option value="Fiscal 1">Fiscal 1</option>
-                <option value="Fiscal 2">Fiscal 2</option>
-            </select>
-        </div>
-
-        <div class="card border-blue">
-            <h3>Colaboradores <span>*</span></h3>
-            <div class="tip-box">💡 Selecione todos os profissionais envolvidos nesta frente operacional.</div>
-            <div class="checkbox-group">
-                <div class="checkbox-item"><input type="checkbox" name="colab" value="ADEMARCIO SOUZA BARRETO"> ADEMARCIO SOUZA BARRETO</div>
-                <div class="checkbox-item"><input type="checkbox" name="colab" value="ALDOMARIO BRILHANTE"> ALDOMARIO BRILHANTE</div>
-                <div class="checkbox-item"><input type="checkbox" name="colab" value="AMANDA LAIS BEZERRA"> AMANDA LAIS BEZERRA</div>
-                <div class="checkbox-item"><input type="checkbox" name="colab" value="AMARO MENDONÇA NUNES"> AMARO MENDONÇA NUNES</div>
-                <div class="checkbox-item"><input type="checkbox" name="colab" value="ANA CAROLINA LOPES"> ANA CAROLINA LOPES</div>
-                <div class="checkbox-item"><input type="checkbox" name="colab" value="ANGLER RIBEIRO VIVEIRA"> ANGLER RIBEIRO VIVEIRA</div>
-            </div>
-        </div>
-
-        <div class="card border-orange">
-            <h3>HH ou PRODUÇÃO <span>*</span></h3>
-            <div class="tip-box">💡 Defina se a métrica de faturamento/apontamento será por Homem-Hora ou Produção.</div>
-            <select id="hhProducao" required>
-                <option value="">Escolher</option>
-                <option value="HH">HH</option>
-                <option value="PRODUÇÃO">PRODUÇÃO</option>
-            </select>
-        </div>
-        <div class="card border-orange">
-            <h3>Equipamento <span>*</span></h3>
-            <div class="tip-box">💡 Indique as máquinas/ferramentas de grande porte utilizadas. Se não houver, digite "Nenhum".</div>
-            <input type="text" id="equipamento" placeholder="Ex: Escavadeira XYZ ou 'Nenhum'" required>
-        </div>
-
-        <div class="card border-orange">
-            <h3>Atividade <span>*</span></h3>
-            <div class="tip-box">💡 Descreva de forma técnica e resumida o progresso físico realizado no dia.</div>
-            <textarea id="atividade" rows="3" placeholder="Ex: Escavação mecânica de valas para rede interna..." required></textarea>
-        </div>
-
-        <div class="card border-orange">
-            <h3>Desvios <span>*</span></h3>
-            <div class="tip-box">💡 Registre qualquer anomalia de segurança, SSMA ou técnica. Se não houver, digite "Nenhum".</div>
-            <input type="text" id="desvios" placeholder="Digite o desvio ou escreva 'Nenhum'" required>
-        </div>
-
-        <div class="card border-orange">
-            <h3>Fotos da Atividade <span>*</span></h3>
-            <div class="tip-box">💡 Faça o upload dos registros fotográficos obrigatórios da frente operacional.</div>
-            <input type="file" id="fotos" required>
-        </div>
-
-        <div class="card border-orange">
-            <h3>Impactos Mão de Obra <span>*</span></h3>
-            <div class="tip-box">💡 Registre faltas, atrasos ou paralisações climáticas. Se estiver tudo normal, digite "Nenhum".</div>
-            <input type="text" id="impactos" placeholder="Digite os impactos identificados ou escreva 'Nenhum'" required>
-        </div>
-
-        <div class="card border-green">
-            <h3>9. Status da Atividade <span>*</span></h3>
-            <div class="tip-box">💡 Indique a condição real de encerramento da meta diária desta atividade.</div>
-            <select id="statusAtividade" required>
-                <option value="Concluída">Concluída</option>
-                <option value="Parcialmente Concluída">Parcialmente Concluída</option>
-                <option value="Em Andamento">Em Andamento</option>
-                <option value="Pendente">Pendente</option>
-            </select>
-        </div>
-
-        <div class="card border-green">
-            <h3>10. Materiais Pendentes</h3>
-            <div class="tip-box">💡 Liste insumos ou materiais críticos faltantes. Se não houver pendências, digite "Nenhum".</div>
-            <textarea id="materiaisPendentes" rows="3" placeholder="Escreva o material pendente ou digite 'Nenhum'"></textarea>
-        </div>
-
-        <div class="card border-green">
-            <h3>11. Observações</h3>
-            <div class="tip-box">💡 Espaço livre para adicionar qualquer comentário extra ou histórico relevante sobre o dia ou digite 'Nenhuma'.</div>
-            <textarea id="observacoes" rows="3" placeholder="Informações adicionais livres ou digite 'Nenhuma'"></textarea>
-        </div>
-
-        <div id="previewArea"></div>
-
-        <div class="btn-group">
-            <button type="button" class="main-btn btn-blue" onclick="forçarMensagemManual()">📋 Montar Msg</button>
-            <button type="button" class="main-btn btn-orange" onclick="alert('Use o botão verde de WhatsApp! Ele já salva na planilha automaticamente.')">💾 Salvar Planilha</button>
-            <button type="button" class="main-btn btn-green" onclick="enviarGrupo()">🟢 WhatsApp / Enviar</button>
-        </div>
-    </form>
+    <!-- Cabeçalho, Painel Admin e o formulário completo com os campos de Disciplina, Líder, Usina, Subárea, Fiscal, Colaboradores, HH/Produção, Equipamento, Atividade, Desvios, Fotos, Impactos de Mão de Obra, Status da Atividade, Materiais Pendentes e Observações -->
+    <!-- Cole aqui a estrutura completa dos elementos HTML e seletores da Parte 2 -->
 </div>
-
 <script>
-    let msgPronta = "";
+ let msgPronta = "";
 
-    function obterDados(callback) {
-        let colabs = [];
-        document.querySelectorAll('input[name="colab"]:checked').forEach(function(cb) { colabs.push(cb.value); });
+ function obterDados(callback) {
+     let colabs = [];
+     document.querySelectorAll('input[name="colab"]:checked').forEach(function(cb) {
+         colabs.push(cb.value);
+     });
 
-        let dados = {
-            disciplina: document.getElementById('disciplina').value,
-            lider: document.getElementById('lider').value,
-            usina: document.getElementById('usina').value,
-            subarea: document.getElementById('subarea').value,
-            fiscal: document.getElementById('fiscal').value,
-            colaboradores: colabs.join(', '),
-            hhProducao: document.getElementById('hhProducao').value,
-            equipamento: document.getElementById('equipamento').value,
-            atividade: document.getElementById('atividade').value,
-            desvios: document.getElementById('desvios').value,
-            impactos: document.getElementById('impactos').value,
-            statusAtividade: document.getElementById('statusAtividade').value,
-            materialsPendentes: document.getElementById('materiaisPendentes').value || "Nenhum",
-            observacoes: document.getElementById('observacoes').value || "Nenhuma",
-            fotoBase64: "",
-            fotoNome: ""
-        };
+     let dados = {
+         disciplina: document.getElementById('disciplina').value,
+         lider: document.getElementById('lider').value,
+         usina: document.getElementById('usina').value,
+         subarea: document.getElementById('subarea').value,
+         fiscal: document.getElementById('fiscal').value,
+         colaboradores: colabs.join(', '),
+         hhProducao: document.getElementById('hhProducao').value,
+         equipamento: document.getElementById('equipamento').value,
+         atividade: document.getElementById('atividade').value,
+         desvios: document.getElementById('desvios').value,
+         impactos: document.getElementById('impactos').value,
+         statusAtividade: document.getElementById('statusAtividade').value,
+         materialsPendentes: document.getElementById('materiaisPendentes').value || "Nenhum",
+         observacoes: document.getElementById('observacoes').value || "Nenhuma",
+         fotoBase64: "",
+         fotoNome: ""
+     };
 
-        let fotoInput = document.getElementById('fotos');
-        if (fotoInput.files.length > 0) {
-            let file = fotoInput.files[0];
-            let reader = new FileReader();
-            reader.onloadend = function() {
-                dados.fotoBase64 = reader.result;
-                dados.fotoNome = file.name;
-                callback(dados);
-            };
-            reader.readAsDataURL(file);
-        } else {
-            callback(dados);
-        }
-    }
+     let fotoInput = document.getElementById('fotos');
+     if (fotoInput.files.length > 0) {
+         let file = fotoInput.files[0];
+         let reader = new FileReader();
+         reader.onloadend = function() {
+             dados.fotoBase64 = reader.result;
+             dados.fotoNome = file.name;
+             callback(dados);
+         };
+         reader.readAsDataURL(file);
+     } else {
+         callback(dados);
+     }
+ }
 
-    function gerarTextoRDO(d) {
-        msgPronta = `*RDO - CONSÓRCIO FORÇA SUL*\n\n`;
-        msgPronta += `⚙️ *Disciplina:* ${d.disciplina}\n`;
-        msgPronta += `👤 *Líder:* ${d.lider}\n`;
-        msgPronta += `🏢 *Usina:* ${d.usina} | *Subárea:* ${d.subarea}\n`;
-        msgPronta += `🕵️‍♂️ *Fiscal:* ${d.fiscal}\n\n`;
-        msgPronta += `👥 *Equipe:* ${d.colaboradores || 'Nenhuma'}\n\n`;
-        msgPronta += `📊 *Tipo:* ${d.hhProducao} | 🚜 *Equipamento:* ${d.equipamento}\n`;
-        msgPronta += `📝 *Atividade:* ${d.atividade}\n`;
-        msgPronta += `⚠️ *Desvios:* ${d.desvios}\n`;
-        msgPronta += `🛑 *Impactos M.O:* ${d.impactos}\n\n`;
-        msgPronta += `📌 *Status:* ${d.statusAtividade}\n`;
-        msgPronta += `📦 *Materiais Pendentes:* ${d.materialsPendentes}\n`;
-        msgPronta += `🔍 *Obs:* ${d.observacoes}\n`;
-        
-        const preview = document.getElementById('previewArea');
-        preview.innerText = msgPronta;
-        preview.style.display = "block";
-        navigator.clipboard.writeText(msgPronta);
-    }
+ function gerarTextoRDO(d) {
+     msgPronta = `*RDO - CONSÓRCIO FORÇA SUL*\n\n`;
+     msgPronta += `⚙️ *Disciplina:* ${d.disciplina}\n`;
+     msgPronta += `👤 *Líder:* ${d.lider}\n`;
+     msgPronta += `🏢 *Usina:* ${d.usina} | *Subárea:* ${d.subarea}\n`;
+     msgPronta += `🕵️‍♂️ *Fiscal:* ${d.fiscal}\n\n`;
+     msgPronta += `👥 *Equipe:* ${d.colaboradores || 'Nenhuma'}\n\n`;
+     msgPronta += `📊 *Tipo:* ${d.hhProducao} | 🚜 *Equipamento:* ${d.equipamento}\n`;
+     msgPronta += `📝 *Atividade:* ${d.atividade}\n`;
+     msgPronta += `⚠️ *Desvios:* ${d.desvios}\n`;
+     msgPronta += `🛑 *Impactos M.O:* ${d.impactos}\n\n`;
+     msgPronta += `📌 *Status:* ${d.statusAtividade}\n`;
+     msgPronta += `📦 *Materiais Pendentes:* ${d.materialsPendentes}\n`;
+     msgPronta += `🔍 *Obs:* ${d.observacoes}\n`;
 
-    function forçarMensagemManual() {
-        const form = document.getElementById('rdoForm');
-        if(!form.checkValidity()) { alert("Preencha todos os campos obrigatórios!"); form.reportValidity(); return; }
-        obterDados(function(dados) {
-            gerarTextoRDO(dados);
-            alert("Mensagem estruturada e copiada com sucesso!");
-        });
-    }
+     const preview = document.getElementById('previewArea');
+     preview.innerText = msgPronta;
+     preview.style.display = "block";
+     
+     if (navigator.clipboard && navigator.clipboard.writeText) {
+         navigator.clipboard.writeText(msgPronta).catch(err => console.error("Erro ao copiar: ", err));
+     }
+ }
 
-    function enviarGrupo() {
-        const form = document.getElementById('rdoForm');
-        if(!form.checkValidity()) { alert("Por favor, preencha todos os campos obrigatórios antes de enviar!"); form.reportValidity(); return; }
+ function forçarMensagemManual() {
+     const form = document.getElementById('rdoForm');
+     if(!form.checkValidity()) {
+         alert("Preencha todos os campos obrigatórios!");
+         form.reportValidity();
+         return;
+     }
+     obterDados(function(dados) {
+         gerarTextoRDO(dados);
+         alert("Mensagem estruturada e copiada com sucesso!");
+     });
+ }
 
-        const urlPlanilha = document.getElementById('scriptUrl').value;
-        const linkWhatsapp = document.getElementById('whatsappLink').value || "https://whatsapp.com";
+ function enviarGrupo() {
+     const form = document.getElementById('rdoForm');
+     if(!form.checkValidity()) {
+         alert("Por favor, preencha todos os campos obrigatórios antes de enviar!");
+         form.reportValidity();
+         return;
+     }
 
-        const janelaWhatsapp = window.open(linkWhatsapp, '_blank');
+     const urlPlanilha = document.getElementById('scriptUrl').value;
+     if(!urlPlanilha) {
+         alert("ATENÇÃO: URL do Google Script não configurada no Painel Administrativo!");
+         return;
+     }
 
-        obterDados(function(dados) {
-            gerarTextoRDO(dados);
+     alert("Enviando dados para a planilha... Aguarde.");
 
-            if(urlPlanilha) {
-                fetch(urlPlanilha, {
-                    method: "POST",
-                    mode: "no-cors",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(dados)
-                })
-                .then(function() { console.log("Dados enviados com sucesso!"); })
-                .catch(function(err) { console.error("Erro planilha: " + err); });
-            }
-        });
-    }
+     obterDados(function(dados) {
+         gerarTextoRDO(dados);
 
-    function toggleAdmin() {
-        const senha = prompt("Digite a senha do Administrador:");
-        if (senha === "2026") { document.getElementById('adminPanel').classList.toggle('hidden'); }
-        else { alert("Senha incorreta!"); }
-    }
-    function saveAdmin() { alert("Configurações salvas localmente!"); document.getElementById('adminPanel').classList.add('hidden'); }
+         fetch(urlPlanilha, {
+             method: "POST",
+             body: JSON.stringify(dados),
+             headers: {
+                 "Content-Type": "text/plain;charset=utf-8" 
+             }
+         })
+         .then(response => response.json())
+         .then(resultado => {
+             console.log("Planilha respondida:", resultado);
+             
+             let linkWhatsappBase = document.getElementById('whatsappLink').value || "https://whatsapp.com";
+             let urlFinal = "";
+             
+             if (linkWhatsappBase.includes("://whatsapp.com")) {
+                 urlFinal = linkWhatsappBase;
+             } else {
+                 urlFinal = `https://whatsapp.com{encodeURIComponent(msgPronta)}`;
+             }
+
+             let segundos = 3;
+             
+             const msgSucesso = document.createElement("div");
+             msgSucesso.style.position = "fixed";
+             msgSucesso.style.top = "20px";
+             msgSucesso.style.left = "50%";
+             msgSucesso.style.transform = "translateX(-50%)";
+             msgSucesso.style.backgroundColor = "#00a859";
+             msgSucesso.style.color = "white";
+             msgSucesso.style.padding = "15px 30px";
+             msgSucesso.style.borderRadius = "8px";
+             msgSucesso.style.boxShadow = "0 4px 15px rgba(0,0,0,0.2)";
+             msgSucesso.style.zIndex = "9999";
+             msgSucesso.style.fontWeight = "bold";
+             msgSucesso.style.textAlign = "center";
+             msgSucesso.innerText = `✅ RDO enviado com sucesso!\nRedirecionando em ${segundos} segundos...`;
+             document.body.appendChild(msgSucesso);
+
+             const contador = setInterval(function() {
+                 segundos--;
+                 if (segundos > 0) {
+                     msgSucesso.innerText = `✅ RDO enviado com sucesso!\nRedirecionando em ${segundos} segundos...`;
+                 } else {
+                     clearInterval(contador);
+                     msgSucesso.remove();
+                     
+                     if (linkWhatsappBase.includes("://whatsapp.com")) {
+                         alert("Como você configurou um link de GRUPO, o WhatsApp será aberto e você só precisa colar (Ctrl + V) o relatório que já foi copiado.");
+                     }
+                     window.open(urlFinal, '_blank');
+                     form.reset();
+                 }
+             }, 1000);
+         })
+         .catch(function(err) {
+             alert("Erro ao salvar na planilha. Verifique se o Script foi publicado como 'Qualquer pessoa'.");
+             console.error("Erro planilha: " + err);
+         });
+     });
+ }
+
+ function toggleAdmin() {
+     const senha = prompt("Digite a senha do Administrador:");
+     if (senha === "2026") {
+         document.getElementById('adminPanel').classList.toggle('hidden');
+     } else {
+         alert("Senha incorreta!");
+     }
+ }
+
+ function saveAdmin() {
+     alert("Configurações salvas localmente!");
+     document.getElementById('adminPanel').classList.add('hidden');
+ }
 </script>
 </body>
 </html>
-
