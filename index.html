@@ -77,8 +77,8 @@
         select, input[type="text"], textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 4px; box-sizing: border-box; font-size: 14px; background-color: #fafafa; }
         select:focus, input[type="text"]:focus, textarea:focus { border-color: var(--logo-blue); outline: none; background-color: #fff; }
         .checkbox-group { max-height: 200px; overflow-y: auto; border: 1px solid var(--border); padding: 10px; border-radius: 4px; background: #fafafa; }
-        .checkbox-item { display: flex; align-items: center; margin-bottom: 8px; }
-        .checkbox-item input { margin-right: 10px; }
+        .checkbox-item { display: flex; align-items: center; margin-bottom: 8px; font-size: 14px; }
+        .checkbox-item input { margin-right: 10px; transform: scale(1.2); cursor: pointer; }
         .btn-group { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
         button.main-btn { padding: 14px 10px; border: none; border-radius: 4px; font-size: 13px; font-weight: bold; cursor: pointer; transition: 0.2s; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .btn-blue { background-color: var(--logo-blue); }
@@ -91,6 +91,9 @@
         .hidden { display: none !important; }
         .admin-panel { background: #fff3cd; border: 1px solid #ffeeba; color: #856404; }
     </style>
+</head>
+<body>
+<div class="container">
 </head>
 <body>
 <div class="container">
@@ -121,260 +124,149 @@
                 <option value="Mecânica">Mecânica</option>
             </select>
         </div>
+
         <div class="card border-blue">
             <h3>Líder / Encarregado <span>*</span></h3>
             <div class="tip-box">💡 Selecione o supervisor responsável pela execução direta do serviço.</div>
             <select id="lider" required>
-                <option value="">Escolher</option>
-                <option value="Líder 1">Líder 1</option>
-                <option value="Líder 2">Líder 2</option>
+                <option value="">Carregando líderes...</option>
             </select>
         </div>
 
-        <div class="card border-blue">
+        <div class="card border-orange">
             <h3>Usina <span>*</span></h3>
-            <div class="tip-box">💡 Marque a unidade fabril/operacional onde a frente está alocada.</div>
+            <div class="tip-box">💡 Selecione em qual usina a atividade está ocorrendo.</div>
             <select id="usina" required>
-                <option value="">Escolher</option>
-                <option value="Usina A">Usina A</option>
-                <option value="Usina B">Usina B</option>
+                <option value="">Carregando usinas...</option>
             </select>
         </div>
 
-        <div class="card border-blue">
+        <div class="card border-orange">
             <h3>Subárea <span>*</span></h3>
-            <div class="tip-box">💡 Especifique o local exato ou subsetor da atividade dentro da Usina.</div>
+            <div class="tip-box">💡 Informe o local exato da estrutura dentro do complexo.</div>
             <select id="subarea" required>
-                <option value="">Escolher</option>
-                <option value="Área Inicial">Área Inicial</option>
-                <option value="Área Secundária">Área Secundária</option>
+                <option value="">Carregando subáreas...</option>
             </select>
         </div>
 
-        <div class="card border-blue">
-            <h3>Fiscal <span>*</span></h3>
-            <div class="tip-box">💡 Informe o fiscal do cliente/consórcio mapeado para validação.</div>
+        <div class="card border-green">
+            <h3>Fiscal responsável <span>*</span></h3>
+            <div class="tip-box">💡 Engenheiro ou técnico que está acompanhando a entrega.</div>
             <select id="fiscal" required>
-                <option value="">Escolher</option>
-                <option value="Fiscal 1">Fiscal 1</option>
-                <option value="Fiscal 2">Fiscal 2</option>
+                <option value="">Carregando fiscais...</option>
             </select>
         </div>
 
         <div class="card border-blue">
-            <h3>Colaboradores <span>*</span></h3>
-            <div class="tip-box">💡 Selecione todos os profissionais envolvidos nesta frente operacional.</div>
-            <div class="checkbox-group">
-                <div class="checkbox-item"><input type="checkbox" name="colab" value="ADEMARCIO SOUZA BARRETO"> ADEMARCIO SOUZA BARRETO</div>
-                <div class="checkbox-item"><input type="checkbox" name="colab" value="ALDOMARIO BRILHANTE"> ALDOMARIO BRILHANTE</div>
-                <div class="checkbox-item"><input type="checkbox" name="colab" value="AMANDA LAIS BEZERRA"> AMANDA LAIS BEZERRA</div>
-                <div class="checkbox-item"><input type="checkbox" name="colab" value="AMARO MENDONÇA NUNES"> AMARO MENDONÇA NUNES</div>
-                <div class="checkbox-item"><input type="checkbox" name="colab" value="ANA CAROLINA LOPES"> ANA CAROLINA LOPES</div>
-                <div class="checkbox-item"><input type="checkbox" name="colab" value="ANGLER RIBEIRO VIVEIRA"> ANGLER RIBEIRO VIVEIRA</div>
+            <h3>Colaboradores na Atividade <span>*</span></h3>
+            <div class="tip-box">💡 Marque todos os colaboradores escalados para este serviço hoje.</div>
+            <div class="checkbox-group" id="colaboradoresGroup">
+                <div style="padding: 10px; color: #666;">Carregando colaboradores...</div>
             </div>
-        </div>
-
-        <div class="card border-orange">
-            <h3>HH ou PRODUÇÃO <span>*</span></h3>
-            <div class="tip-box">💡 Defina se a métrica de faturamento/apontamento será por Homem-Hora ou Produção.</div>
-            <select id="hhProducao" required>
-                <option value="">Escolher</option>
-                <option value="HH">HH</option>
-                <option value="PRODUÇÃO">PRODUÇÃO</option>
-            </select>
-        </div>
-
-        <div class="card border-orange">
-            <h3>Equipamento <span>*</span></h3>
-            <div class="tip-box">💡 Indique as máquinas/ferramentas de grande porte utilizadas. Se não houver, digite "Nenhum".</div>
-            <input type="text" id="equipamento" placeholder="Ex: Escavadeira XYZ ou 'Nenhum'" required>
-        </div>
-
-        <div class="card border-orange">
-            <h3>Atividade <span>*</span></h3>
-            <div class="tip-box">💡 Descreva de forma técnica e resumida o progresso físico realizado no dia.</div>
-            <textarea id="atividade" rows="3" placeholder="Ex: Escavação mecânica de valas para rede interna..." required></textarea>
-        </div>
-
-        <div class="card border-orange">
-            <h3>Desvios <span>*</span></h3>
-            <div class="tip-box">💡 Registre qualquer anomalia de segurança, SSMA ou técnica. Se não houver, digite "Nenhum".</div>
-            <input type="text" id="desvios" placeholder="Digite o desvio ou escreva 'Nenhum'" required>
-        </div>
-
-        <div class="card border-orange">
-            <h3>Fotos da Atividade <span>*</span></h3>
-            <div class="tip-box">💡 Faça o upload dos registros fotográficos obrigatórios da frente operacional.</div>
-            <input type="file" id="fotos" required>
-        </div>
-
-        <div class="card border-orange">
-            <h3>Impactos Mão de Obra <span>*</span></h3>
-            <div class="tip-box">💡 Registre faltas, atrasos ou paralisações climáticas. Se estiver tudo normal, digite "Nenhum".</div>
-            <input type="text" id="impactos" placeholder="Digite os impactos identificados ou escreva 'Nenhum'" required>
-        </div>
-
-        <div class="card border-green">
-            <h3>9. Status da Atividade <span>*</span></h3>
-            <div class="tip-box">💡 Indique a condição real de encerramento da meta diária desta atividade.</div>
-            <select id="statusAtividade" required>
-                <option value="Concluída">Concluída</option>
-                <option value="Parcialmente Concluída">Parcialmente Concluída</option>
-                <option value="Em Andamento">Em Andamento</option>
-                <option value="Pendente">Pendente</option>
-            </select>
-        </div>
-
-        <div class="card border-green">
-            <h3>10. Materiais Pendentes</h3>
-            <div class="tip-box">💡 Liste insumos ou materiais críticos faltantes. Se não houver pendências, digite "Nenhum".</div>
-            <textarea id="materiaisPendentes" rows="3" placeholder="Escreva o material pendente ou digite 'Nenhum'"></textarea>
-        </div>
-
-        <div class="card border-green">
-            <h3>11. Observações</h3>
-            <div class="tip-box">💡 Espaço livre para adicionar qualquer comentário extra ou histórico relevante sobre o dia ou digite 'Nenhuma'.</div>
-            <textarea id="observacoes" rows="3" placeholder="Informações adicionais livres ou digite 'Nenhuma'"></textarea>
-        </div>
-
-        <div id="previewArea"></div>
-
-        <div class="btn-group">
-            <button type="button" class="main-btn btn-blue" onclick="forçarMensagemManual()">📋 Montar Msg</button>
-            <button type="button" class="main-btn btn-orange" onclick="alert('Use o botão verde de WhatsApp! Ele já salva na planilha automaticamente.')">💾 Salvar Planilha</button>
-            <button type="button" class="main-btn btn-green" onclick="enviarGrupo()">🟢 WhatsApp / Enviar</button>
         </div>
     </form>
 </div>
 <script>
-    let msgPronta = "";
-
-    // Recupera as configurações salvas assim que a página carrega
-    window.onload = function() {
-        if(localStorage.getItem('scriptUrl')) {
-            document.getElementById('scriptUrl').value = localStorage.getItem('scriptUrl');
-        }
-        if(localStorage.getItem('whatsappLink')) {
-            document.getElementById('whatsappLink').value = localStorage.getItem('whatsappLink');
-        }
-    };
-
-    function obterDados(callback) {
-        let colabs = [];
-        document.querySelectorAll('input[name="colab"]:checked').forEach(function(cb) { colabs.push(cb.value); });
-
-        let dados = {
-            disciplina: document.getElementById('disciplina').value,
-            lider: document.getElementById('lider').value,
-            usina: document.getElementById('usina').value,
-            subarea: document.getElementById('subarea').value,
-            fiscal: document.getElementById('fiscal').value,
-            colaboradores: colabs.join(', '),
-            hhProducao: document.getElementById('hhProducao').value,
-            equipamento: document.getElementById('equipamento').value,
-            atividade: document.getElementById('atividade').value,
-            desvios: document.getElementById('desvios').value,
-            impactos: document.getElementById('impactos').value,
-            statusAtividade: document.getElementById('statusAtividade').value,
-            materialsPendentes: document.getElementById('materiaisPendentes').value || "Nenhum",
-            observacoes: document.getElementById('observacoes').value || "Nenhuma",
-            fotoBase64: "",
-            fotoNome: ""
-        };
-
-        let fotoInput = document.getElementById('fotos');
-        if (fotoInput.files.length > 0) {
-            let file = fotoInput.files[0];
-            let reader = new FileReader();
-            reader.onloadend = function() {
-                dados.fotoBase64 = reader.result;
-                dados.fotoNome = file.name;
-                callback(dados);
-            };
-            reader.readAsDataURL(file);
-        } else {
-            callback(dados);
-        }
-    }
-
-    function gerarTextoRDO(d) {
-        msgPronta = `*RDO - CONSÓRCIO FORÇA SUL*\n\n`;
-        msgPronta += `⚙️ *Disciplina:* ${d.disciplina}\n`;
-        msgPronta += `👤 *Líder:* ${d.lider}\n`;
-        msgPronta += `🏢 *Usina:* ${d.usina} | *Subárea:* ${d.subarea}\n`;
-        msgPronta += `🕵️‍♂️ *Fiscal:* ${d.fiscal}\n\n`;
-        msgPronta += `👥 *Equipe:* ${d.colaboradores || 'Nenhuma'}\n\n`;
-        msgPronta += `📊 *Tipo:* ${d.hhProducao} | 🚜 *Equipamento:* ${d.equipamento}\n`;
-        msgPronta += `📝 *Atividade:* ${d.atividade}\n`;
-        msgPronta += `⚠️ *Desvios:* ${d.desvios}\n`;
-        msgPronta += `🛑 *Impactos M.O:* ${d.impactos}\n\n`;
-        msgPronta += `📌 *Status:* ${d.statusAtividade}\n`;
-        msgPronta += `📦 *Materiais Pendentes:* ${d.materialsPendentes}\n`;
-        msgPronta += `🔍 *Obs:* ${d.observacoes}\n`;
-        
-        const preview = document.getElementById('previewArea');
-        preview.innerText = msgPronta;
-        preview.style.display = "block";
-        navigator.clipboard.writeText(msgPronta);
-    }
-
-    function forçarMensagemManual() {
-        const form = document.getElementById('rdoForm');
-        if(!form.checkValidity()) { alert("Preencha todos os campos obrigatórios!"); form.reportValidity(); return; }
-        obterDados(function(dados) {
-            gerarTextoRDO(dados);
-            alert("Mensagem estruturada e copiada com sucesso!");
-        });
-    }
-
-    function enviarGrupo() {
-        const form = document.getElementById('rdoForm');
-        if(!form.checkValidity()) { alert("Por favor, preencha todos os campos obrigatórios antes de enviar!"); form.reportValidity(); return; }
-
-        const urlPlanilha = document.getElementById('scriptUrl').value;
-        const linkWhatsapp = document.getElementById('whatsappLink').value || "https://whatsapp.com";
-
-        obterDados(function(dados) {
-            gerarTextoRDO(dados);
-
-            if(urlPlanilha) {
-                fetch(urlPlanilha, {
-                    method: "POST",
-                    mode: "no-cors",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(dados)
-                })
-                .then(function() { 
-                    console.log("Dados enviados para a planilha com sucesso!"); 
-                    window.open(linkWhatsapp, '_blank');
-                })
-                .catch(function(err) { 
-                    console.error("Erro planilha: " + err); 
-                    window.open(linkWhatsapp, '_blank');
-                });
-            } else {
-                window.open(linkWhatsapp, '_blank');
-            }
-        });
-    }
-
     function toggleAdmin() {
-        const senha = prompt("Digite a senha do Administrador:");
-        if (senha === "2026") { document.getElementById('adminPanel').classList.toggle('hidden'); }
-        else { alert("Senha incorreta!"); }
+        const panel = document.getElementById('adminPanel');
+        panel.classList.toggle('hidden');
     }
 
-    function saveAdmin() { 
-        const url = document.getElementById('scriptUrl').value;
-        const wa = document.getElementById('whatsappLink').value;
-        
-        // Salva os dados permanentemente no navegador do usuário
-        localStorage.setItem('scriptUrl', url);
-        localStorage.setItem('whatsappLink', wa);
-        
-        alert("Configurações salvas no navegador com sucesso!"); 
-        document.getElementById('adminPanel').classList.add('hidden'); 
+    function saveAdmin() {
+        alert('Configurações salvas localmente!');
+        toggleAdmin();
     }
+
+    // Link oficial da sua aba carga_de_dados em formato CSV
+    const urlCargaDados = "https://google.com";
+
+    async function puxarDadosPlanilha() {
+        try {
+            const resposta = await fetch(urlCargaDados);
+            const textoCsv = await resposta.text();
+            
+            // Divide o arquivo por quebras de linha
+            const linhas = textoCsv.split(/\r?\n/);
+            
+            const listaLideres = [];
+            const listaColaboradores = [];
+            const listaUsinas = [];
+            const listaSubareas = [];
+            const listaFiscais = [];
+
+            // Começa na linha 1 para ignorar os cabeçalhos
+            for (let i = 1; i < linhas.length; i++) {
+                if (!linhas[i].trim()) continue;
+
+                // Divide colunas tratando aspas de nomes com vírgulas de forma limpa
+                const colunas = linhas[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)?/g) || [];
+                const limpar = (t) => t ? t.replace(/^"|"$/g, '').trim() : "";
+
+                const lider = limpar(colunas[0]);
+                const colaborador = limpar(colunas[1]);
+                const usina = limpar(colunas[2]);
+                const subarea = limpar(colunas[3]);
+                const fiscal = limpar(colunas[4]);
+
+                if (lider) listaLideres.push(lider);
+                if (colaborador) listaColaboradores.push(colaborador);
+                if (usina) listaUsinas.push(usina);
+                if (subarea) listaSubareas.push(subarea);
+                if (fiscal) listaFiscais.push(fiscal);
+            }
+
+            // Injeta as opções nos selects do formulário HTML
+            preencherSelect("lider", listaLideres);
+            preencherSelect("usina", listaUsinas);
+            preencherSelect("subarea", listaSubareas);
+            preencherSelect("fiscal", listaFiscais);
+            
+            // Cria os checkboxes de colaboradores dinamicamente
+            preencherCheckboxes("colaboradoresGroup", listaColaboradores);
+
+        } catch (erro) {
+            console.error("Erro ao sincronizar informações com a planilha:", erro);
+        }
+    }
+
+    function preencherSelect(idElemento, listaItens) {
+        const campoSelect = document.getElementById(idElemento);
+        if (!campoSelect) return;
+        campoSelect.innerHTML = '<option value="">Escolher</option>';
+        listaItens.forEach(item => {
+            const opt = document.createElement("option");
+            opt.value = item;
+            opt.textContent = item;
+            campoSelect.appendChild(opt);
+        });
+    }
+
+    function preencherCheckboxes(idElemento, listaItens) {
+        const container = document.getElementById(idElemento);
+        if (!container) return;
+        container.innerHTML = ''; // Limpa o aviso de carregamento
+
+        listaItens.forEach((item, index) => {
+            const divItem = document.createElement("div");
+            divItem.className = "checkbox-item";
+
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.id = `colab_${index}`;
+            checkbox.value = item;
+
+            const label = document.createElement("label");
+            label.htmlFor = `colab_${index}`;
+            label.textContent = item;
+
+            divItem.appendChild(checkbox);
+            divItem.appendChild(label);
+            container.appendChild(divItem);
+        });
+    }
+
+    // Inicializa o carregamento assim que abrir a página
+    window.onload = puxarDadosPlanilha;
 </script>
 </body>
 </html>
