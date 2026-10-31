@@ -289,7 +289,7 @@
     }
 
 
-async function obterDados(callback) {
+function obterDados(callback) {
     let colabs = [];
     document.querySelectorAll('input[name="colab"]:checked').forEach(function(cb) { colabs.push(cb.value); });
 
@@ -314,24 +314,19 @@ async function obterDados(callback) {
 
     let fotoInput = document.getElementById('fotos');
     
-    if (fotoInput && fotoInput.files && fotoInput.files.length > 0) {
-        for (let i = 0; i < fotoInput.files.length; i++) {
-            try {
-                let file = fotoInput.files[i];
-                let compressedData = await comprimirFoto(file);
-                dados.fotosBase64.push(compressedData.base64);
-                dados.fotosNomes.push(compressedData.nome);
-            } catch (err) {
-                console.error("Erro ao processar foto:", err);
-            }
-        }
+    // Se não tiver fotos, avança direto de forma simples
+    if (!fotoInput || !fotoInput.files || fotoInput.files.length === 0) {
+        callback(dados);
+        return;
     }
-    callback(dados);
-}
 
-function comprimirFoto(file) {
-    return new Promise((resolve, reject) => {
+    let arquivosLeitura = 0;
+    let totalArquivos = fotoInput.files.length;
+
+    for (let i = 0; i < totalArquivos; i++) {
+        let file = fotoInput.files[i];
         let reader = new FileReader();
+
         reader.onloadend = function() {
             let img = new Image();
             img.src = reader.result;
@@ -352,16 +347,17 @@ function comprimirFoto(file) {
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                 let compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
                 
-                resolve({
-                    base64: compressedBase64,
-                    nome: file.name.replace(/\.[^/.]+$/, "") + ".jpg"
-                });
+                dados.fotosBase64.push(compressedBase64);
+                dados.fotosNomes.push(file.name.replace(/\.[^/.]+$/, "") + ".jpg");
+                
+                arquivosLeitura++;
+                if (arquivosLeitura === totalArquivos) {
+                    callback(dados);
+                }
             };
-            img.onerror = () => reject("Erro ao carregar imagem");
         };
-        reader.onerror = () => reject("Erro ao ler arquivo");
         reader.readAsDataURL(file);
-    });
+    }
 }
 
 function gerarTextoRDO(d) {
@@ -380,23 +376,23 @@ function gerarTextoRDO(d) {
     msgPronta += `🔍 *Obs:* ${d.observacoes}\n\n`;
 
     const preview = document.getElementById('previewArea');
-    preview.innerText = msgPronta;
-    preview.style.display = "block";
+    if(preview) {
+        preview.innerText = msgPronta;
+        preview.style.display = "block";
+    }
     navigator.clipboard.writeText(msgPronta);
 }
 
-// Adicionado o termo 'async' obrigatório aqui para casar com a leitura de fotos
-async function forçarMensagemManual() {
+function forçarMensagemManual() {
     const form = document.getElementById('rdoForm');
     if(!form.checkValidity()) { alert("Preencha os campos obrigatórios!"); form.reportValidity(); return; }
-    await obterDados(function(dados) {
+    obterDados(function(dados) {
         gerarTextoRDO(dados);
         alert("Mensagem estruturada e copiada!");
     });
 }
 
-// Adicionado o termo 'async' obrigatório aqui para o botão destravar na hora
-async function enviarGrupo() {
+function enviarGrupo() {
     const form = document.getElementById('rdoForm');
     if(!form.checkValidity()) { alert("Preencha todos os campos obrigatórios!"); form.reportValidity(); return; }
 
@@ -408,10 +404,11 @@ async function enviarGrupo() {
     const urlPlanilha = document.getElementById('scriptUrl').value;
     const linkWhatsapp = document.getElementById('whatsappLink').value || "https://whatsapp.com";
 
-    await obterDados(function(dados) {
+    obterDados(function(dados) {
         gerarTextoRDO(dados);
         
-        alert("Formulário RDO enviado com sucesso!\n\nO relatório foi copiado. Clique em OK para ir ao WhatsApp.");
+        // Alerta nativo que destrava a interface do usuário
+        alert("Formulário RDO processado!\n\nO texto foi copiado. Clique em OK para finalizar.");
 
         if(urlPlanilha) {
             fetch(urlPlanilha, {
