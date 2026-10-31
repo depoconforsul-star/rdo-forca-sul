@@ -121,6 +121,7 @@
                 <option value="Mecânica">Mecânica</option>
             </select>
         </div>
+
         <div class="card border-blue">
             <h3>Líder / Encarregado <span>*</span></h3>
             <div class="tip-box">💡 Selecione o supervisor responsável pela execução direta do serviço.</div>
@@ -157,7 +158,7 @@
             <h3>Colaboradores <span>*</span></h3>
             <div class="tip-box">💡 Selecione todos os profissionais envolvidos nesta frente operacional.</div>
             <div class="checkbox-group" id="container-colaboradores">
-                <!-- O JavaScript vai renderizar a lista da planilha aqui dentro -->
+                <!-- Injetado dinamicamente via planilha -->
             </div>
         </div>
 
@@ -191,8 +192,9 @@
 
         <div class="card border-orange">
             <h3>Fotos da Atividade <span>*</span></h3>
-            <div class="tip-box">💡 Faça o upload dos registros fotográficos obrigatórios da frente operacional.</div>
-            <input type="file" id="fotos" required>
+            <div class="tip-box">💡 Faça o upload dos registros fotográficos obrigatórios (Selecione até 10 fotos).</div>
+            <!-- O atributo 'multiple' permite selecionar mais de um arquivo de imagem -->
+            <input type="file" id="fotos" required multiple accept="image/*">
         </div>
 
         <div class="card border-orange">
@@ -276,7 +278,7 @@
         .catch(err => console.error("Erro ao carregar banco de dados: " + err));
     }
 
-        function preencherDropdown(id, lista) {
+    function preencherDropdown(id, lista) {
         const select = document.getElementById(id);
         select.length = 1; 
         if (lista) {
@@ -287,7 +289,6 @@
             });
         }
     }
-
 
     function obterDados(callback) {
         let colabs = [];
@@ -308,20 +309,50 @@
             statusAtividade: document.getElementById('statusAtividade').value,
             materialsPendentes: document.getElementById('materiaisPendentes').value || "Nenhum",
             observacoes: document.getElementById('observacoes').value || "Nenhuma",
-            fotoBase64: "", fotoNome: ""
+            fotos: [] 
         };
 
-        let fotoInput = document.getElementById('fotos');
-        if (fotoInput.files.length > 0) {
-            let file = fotoInput.files[0];
-            let reader = new FileReader();
-            reader.onloadend = function() {
-                dados.fotoBase64 = reader.result;
-                dados.fotoNome = file.name;
-                callback(dados);
-            };
-            reader.readAsDataURL(file);
-        } else { callback(dados); }
+        const fotoInput = document.getElementById('fotos');
+        const arquivos = fotoInput ? fotoInput.files : [];
+
+        // Proteção contra estouro de memória (limite máximo de 10 arquivos)
+        if (arquivos.length > 10) {
+            alert("⚠️ Limite Máximo Excedido: Você só pode selecionar no máximo 10 fotos!");
+            const botaoVerde = document.querySelector('.btn-green');
+            if (botaoVerde) {
+                botaoVerde.disabled = false;
+                botaoVerde.innerHTML = "🟢 WhatsApp / Enviar";
+            }
+            return;
+        }
+
+        if (arquivos.length === 0) {
+            callback(dados);
+            return;
+        }
+
+        // Processamento fracionado assíncrono para evitar lentidão ou travamentos
+        let promessas = [];
+        for (let i = 0; i < arquivos.length; i++) {
+            let arquivo = arquivos[i];
+            let processarArquivo = new Promise((resolve) => {
+                let reader = new FileReader();
+                reader.onloadend = function() {
+                    resolve({
+                        base64: reader.result.split(',')[1], // Captura apenas o conteúdo puro binário codificado
+                        nome: arquivo.name,
+                        tipo: arquivo.type
+                    });
+                };
+                reader.readAsDataURL(arquivo);
+            });
+            promessas.push(processarArquivo);
+        }
+
+        Promise.all(promessas).then(resultadoLote => {
+            dados.fotos = resultadoLote;
+            callback(dados);
+        });
     }
 
     function gerarTextoRDO(d) {
@@ -339,16 +370,17 @@
         msgPronta += `📦 *Materiais Pendentes:* ${d.materialsPendentes}\n`;
         msgPronta += `🔍 *Obs:* ${d.observacoes}\n\n`;
 
-        
         const preview = document.getElementById('previewArea');
-        preview.innerText = msgPronta;
-        preview.style.display = "block";
+        if (preview) {
+            preview.innerText = msgPronta;
+            preview.style.display = "block";
+        }
         navigator.clipboard.writeText(msgPronta);
     }
 
     function forçarMensagemManual() {
         const form = document.getElementById('rdoForm');
-                if(!form.checkValidity()) { alert("Preencha os campos obrigatórios!"); form.reportValidity(); return; }
+        if(!form.checkValidity()) { alert("Preencha os campos obrigatórios!"); form.reportValidity(); return; }
         obterDados(function(dados) {
             gerarTextoRDO(dados);
             alert("Mensagem estruturada e copiada!");
@@ -362,34 +394,37 @@
         const botaoVerde = document.querySelector('.btn-green');
         botaoVerde.disabled = true;
         const textoOrig = botaoVerde.innerHTML;
-        botaoVerde.innerHTML = "⏳ Enviando...";
+        botaoVerde.innerHTML = "⏳ Enviando Dados e Fotos...";
 
         const urlPlanilha = document.getElementById('scriptUrl').value;
         const linkWhatsapp = document.getElementById('whatsappLink').value || "https://whatsapp.com";
 
         obterDados(function(dados) {
+            if (!dados) return; 
+            
             gerarTextoRDO(dados);
             
-            alert("Formulário RDO enviado com sucesso!\n\nO relatório foi copiado. Clique em OK para ir ao WhatsApp.");
+            alert("Formulário RDO enviado com sucesso!\n\nO relatório foi copiado. Clique em OK para salvar na planilha e ir ao WhatsApp.");
 
             if(urlPlanilha) {
+                // Modificado para text/plain para transpassar restrições de payload grande no Google Script
                 fetch(urlPlanilha, {
                     method: "POST",
-                    mode: "no-cors",
-                    headers: { "Content-Type": "application/json" },
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
                     body: JSON.stringify(dados)
                 })
                 .then(function() { 
-                    window.open(linkWhatsapp, '_blank');
                     botaoVerde.disabled = false; botaoVerde.innerHTML = textoOrig;
+                    window.open(linkWhatsapp, '_blank');
                 })
-                .catch(function() { 
-                    window.open(linkWhatsapp, '_blank');
+                .catch(function(err) { 
+                    console.error("Erro na transmissão do pacote:", err);
                     botaoVerde.disabled = false; botaoVerde.innerHTML = textoOrig;
+                    window.open(linkWhatsapp, '_blank');
                 });
             } else {
-                window.open(linkWhatsapp, '_blank');
                 botaoVerde.disabled = false; botaoVerde.innerHTML = textoOrig;
+                window.open(linkWhatsapp, '_blank');
             }
         });
     }
@@ -408,6 +443,5 @@
         carregarDadosPlanilha();
     }
 </script>
-
 </body>
 </html>
