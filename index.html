@@ -290,7 +290,7 @@
         }
     }
 
-    function obterDados(callback) {
+   function obterDados(callback) {
     let colabs = [];
     document.querySelectorAll('input[name="colab"]:checked').forEach(function(cb) { colabs.push(cb.value); });
 
@@ -336,8 +336,10 @@
         let processarArquivo = new Promise((resolve) => {
             let reader = new FileReader();
             reader.onloadend = function() {
+                // Remove o cabeçalho 'data:image/...;base64,' diretamente no navegador antes do envio
+                let base64Puro = reader.result.split(',')[1];
                 resolve({
-                    base64: reader.result, 
+                    base64: base64Puro, 
                     nome: arquivo.name,
                     tipo: arquivo.type
                 });
@@ -352,7 +354,6 @@
         callback(dados);
     });
 }
-
 
     function gerarTextoRDO(d) {
         msgPronta = `*RDO - CONSÓRCIO FORÇA SUL*\n\n`;
