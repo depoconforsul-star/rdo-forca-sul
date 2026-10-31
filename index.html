@@ -192,7 +192,7 @@
         <div class="card border-orange">
             <h3>Fotos da Atividade <span>*</span></h3>
             <div class="tip-box">💡 Faça o upload dos registros fotográficos obrigatórios da frente operacional.</div>
-           <input type="file" id="fotos" required multiple>
+            <input type="file" id="fotos" required>
         </div>
 
         <div class="card border-orange">
@@ -289,107 +289,125 @@
     }
 
 
-function obterDados(callback) {
-    let colabs = [];
-    document.querySelectorAll('input[name="colab"]:checked').forEach(function(cb) { colabs.push(cb.value); });
+    function obterDados(callback) {
+        let colabs = [];
+        document.querySelectorAll('input[name="colab"]:checked').forEach(function(cb) { colabs.push(cb.value); });
 
-    let dados = {
-        disciplina: document.getElementById('disciplina').value,
-        lider: document.getElementById('lider').value,
-        usina: document.getElementById('usina').value,
-        subarea: document.getElementById('subarea').value,
-        fiscal: document.getElementById('fiscal').value,
-        colaboradores: colabs.join(', '),
-        hhProducao: document.getElementById('hhProducao').value,
-        equipamento: document.getElementById('equipamento').value,
-        atividade: document.getElementById('atividade').value,
-        desvios: document.getElementById('desvios').value,
-        impactos: document.getElementById('impactos').value,
-        statusAtividade: document.getElementById('statusAtividade').value,
-        materialsPendentes: document.getElementById('materialsPendentes').value || "Nenhum",
-        observacoes: document.getElementById('observacoes').value || "Nenhuma",
-        fotos: [] 
-    };
+        let dados = {
+            disciplina: document.getElementById('disciplina').value,
+            lider: document.getElementById('lider').value,
+            usina: document.getElementById('usina').value,
+            subarea: document.getElementById('subarea').value,
+            fiscal: document.getElementById('fiscal').value,
+            colaboradores: colabs.join(', '),
+            hhProducao: document.getElementById('hhProducao').value,
+            equipamento: document.getElementById('equipamento').value,
+            atividade: document.getElementById('atividade').value,
+            desvios: document.getElementById('desvios').value,
+            impactos: document.getElementById('impactos').value,
+            statusAtividade: document.getElementById('statusAtividade').value,
+            materialsPendentes: document.getElementById('materiaisPendentes').value || "Nenhum",
+            observacoes: document.getElementById('observacoes').value || "Nenhuma",
+            fotoBase64: "", fotoNome: ""
+        };
 
-    const campoFotos = document.getElementById('fotos');
-    const arquivos = campoFotos ? campoFotos.files : [];
-
-    // Limitação estrita de no máximo 10 fotos
-    if (arquivos.length > 10) {
-        alert("⚠️ Atenção: Você pode selecionar no máximo 10 fotos por relatório!");
-        const botaoVerde = document.querySelector('.btn-green');
-        if (botaoVerde) {
-            botaoVerde.disabled = false;
-            botaoVerde.innerHTML = "🟢 WhatsApp / Enviar";
-        }
-        return;
-    }
-
-    if (arquivos.length === 0) {
-        callback(dados);
-        return;
-    }
-
-    // Leitura assíncrona fracionada para não congelar o navegador
-    let promessas = [];
-    for (let i = 0; i < arquivos.length; i++) {
-        let arquivo = arquivos[i];
-        let lerArquivo = new Promise((resolve) => {
+        let fotoInput = document.getElementById('fotos');
+        if (fotoInput.files.length > 0) {
+            let file = fotoInput.files[0];
             let reader = new FileReader();
             reader.onloadend = function() {
-                resolve({
-                    base64: reader.result.split(',')[1], // Obtém apenas a string limpa dos dados binários
-                    nome: arquivo.name,
-                    tipo: arquivo.type
-                });
+                dados.fotoBase64 = reader.result;
+                dados.fotoNome = file.name;
+                callback(dados);
             };
-            reader.readAsDataURL(arquivo);
-        });
-        promessas.push(lerArquivo);
+            reader.readAsDataURL(file);
+        } else { callback(dados); }
     }
 
-    Promise.all(promessas).then(resultadoFotos => {
-        dados.fotos = resultadoFotos;
-        callback(dados);
-    });
-}
+    function gerarTextoRDO(d) {
+        msgPronta = `*RDO - CONSÓRCIO FORÇA SUL*\n\n`;
+        msgPronta += `⚙️ *Disciplina:* ${d.disciplina}\n`;
+        msgPronta += `👤 *Líder:* ${d.lider}\n`;
+        msgPronta += `🏢 *Usina:* ${d.usina} | *Subárea:* ${d.subarea}\n`;
+        msgPronta += `🕵️‍♂️ *Fiscal:* ${d.fiscal}\n\n`;
+        msgPronta += `👥 *Equipe:* ${d.colaboradores || 'Nenhuma'}\n\n`;
+        msgPronta += `📊 *Tipo:* ${d.hhProducao} | 🚜 *Equipamento:* ${d.equipamento}\n`;
+        msgPronta += `📝 *Atividade:* ${d.atividade}\n`;
+        msgPronta += `⚠️ *Desvios:* ${d.desvios}\n`;
+        msgPronta += `🛑 *Impactos M.O:* ${d.impactos}\n\n`;
+        msgPronta += `📌 *Status:* ${d.statusAtividade}\n`;
+        msgPronta += `📦 *Materiais Pendentes:* ${d.materialsPendentes}\n`;
+        msgPronta += `🔍 *Obs:* ${d.observacoes}\n\n`;
 
-function enviarGrupo() {
-    const form = document.getElementById('rdoForm');
-    if(!form.checkValidity()) { alert("Preencha todos os campos obrigatórios!"); form.reportValidity(); return; }
-
-    const botaoVerde = document.querySelector('.btn-green');
-    botaoVerde.disabled = true;
-    const textoOrig = botaoVerde.innerHTML;
-    botaoVerde.innerHTML = "⏳ Enviando Dados e Fotos...";
-
-    const urlPlanilha = document.getElementById('scriptUrl').value;
-    const linkWhatsapp = document.getElementById('whatsappLink').value || "https://whatsapp.com";
-
-    obterDados(function(dados) {
-        if (!dados) return; // Cancela se a validação de quantidade de fotos falhar
         
-        gerarTextoRDO(dados);
-        
-        if(urlPlanilha) {
-            // Mudança crucial: enviamos como texto plano para evitar bloqueios de CORS por pre-flight
-            fetch(urlPlanilha, {
-                method: "POST",
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify(dados)
-            })
-            .then(function() { 
-                botaoVerde.disabled = false; botaoVerde.innerHTML = textoOrig;
+        const preview = document.getElementById('previewArea');
+        preview.innerText = msgPronta;
+        preview.style.display = "block";
+        navigator.clipboard.writeText(msgPronta);
+    }
+
+    function forçarMensagemManual() {
+        const form = document.getElementById('rdoForm');
+                if(!form.checkValidity()) { alert("Preencha os campos obrigatórios!"); form.reportValidity(); return; }
+        obterDados(function(dados) {
+            gerarTextoRDO(dados);
+            alert("Mensagem estruturada e copiada!");
+        });
+    }
+
+    function enviarGrupo() {
+        const form = document.getElementById('rdoForm');
+        if(!form.checkValidity()) { alert("Preencha todos os campos obrigatórios!"); form.reportValidity(); return; }
+
+        const botaoVerde = document.querySelector('.btn-green');
+        botaoVerde.disabled = true;
+        const textoOrig = botaoVerde.innerHTML;
+        botaoVerde.innerHTML = "⏳ Enviando...";
+
+        const urlPlanilha = document.getElementById('scriptUrl').value;
+        const linkWhatsapp = document.getElementById('whatsappLink').value || "https://whatsapp.com";
+
+        obterDados(function(dados) {
+            gerarTextoRDO(dados);
+            
+            alert("Formulário RDO enviado com sucesso!\n\nO relatório foi copiado. Clique em OK para ir ao WhatsApp.");
+
+            if(urlPlanilha) {
+                fetch(urlPlanilha, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(dados)
+                })
+                .then(function() { 
+                    window.open(linkWhatsapp, '_blank');
+                    botaoVerde.disabled = false; botaoVerde.innerHTML = textoOrig;
+                })
+                .catch(function() { 
+                    window.open(linkWhatsapp, '_blank');
+                    botaoVerde.disabled = false; botaoVerde.innerHTML = textoOrig;
+                });
+            } else {
                 window.open(linkWhatsapp, '_blank');
-            })
-            .catch(function(err) { 
-                console.error("Erro no envio:", err);
                 botaoVerde.disabled = false; botaoVerde.innerHTML = textoOrig;
-                window.open(linkWhatsapp, '_blank');
-            });
-        } else {
-            botaoVerde.disabled = false; botaoVerde.innerHTML = textoOrig;
-            window.open(linkWhatsapp, '_blank');
-        }
-    });
-}
+            }
+        });
+    }
+
+    function toggleAdmin() {
+        const senha = prompt("Digite a senha do Administrator:");
+        if (senha === "2026") { document.getElementById('adminPanel').classList.toggle('hidden'); }
+        else { alert("Senha incorreta!"); }
+    }
+
+    function saveAdmin() { 
+        localStorage.setItem('scriptUrl', document.getElementById('scriptUrl').value);
+        localStorage.setItem('whatsappLink', document.getElementById('whatsappLink').value);
+        alert("Configurações salvas!"); 
+        document.getElementById('adminPanel').classList.add('hidden');
+        carregarDadosPlanilha();
+    }
+</script>
+
+</body>
+</html>
