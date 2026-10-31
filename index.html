@@ -291,69 +291,68 @@
     }
 
     function obterDados(callback) {
-        let colabs = [];
-        document.querySelectorAll('input[name="colab"]:checked').forEach(function(cb) { colabs.push(cb.value); });
+    let colabs = [];
+    document.querySelectorAll('input[name="colab"]:checked').forEach(function(cb) { colabs.push(cb.value); });
 
-        let dados = {
-            disciplina: document.getElementById('disciplina').value,
-            lider: document.getElementById('lider').value,
-            usina: document.getElementById('usina').value,
-            subarea: document.getElementById('subarea').value,
-            fiscal: document.getElementById('fiscal').value,
-            colaboradores: colabs.join(', '),
-            hhProducao: document.getElementById('hhProducao').value,
-            equipamento: document.getElementById('equipamento').value,
-            atividade: document.getElementById('atividade').value,
-            desvios: document.getElementById('desvios').value,
-            impactos: document.getElementById('impactos').value,
-            statusAtividade: document.getElementById('statusAtividade').value,
-            materialsPendentes: document.getElementById('materiaisPendentes').value || "Nenhum",
-            observacoes: document.getElementById('observacoes').value || "Nenhuma",
-            fotos: [] 
-        };
+    let dados = {
+        disciplina: document.getElementById('disciplina').value,
+        lider: document.getElementById('lider').value,
+        usina: document.getElementById('usina').value,
+        subarea: document.getElementById('subarea').value,
+        fiscal: document.getElementById('fiscal').value,
+        colaboradores: colabs.join(', '),
+        hhProducao: document.getElementById('hhProducao').value,
+        equipamento: document.getElementById('equipamento').value,
+        atividade: document.getElementById('atividade').value,
+        desvios: document.getElementById('desvios').value,
+        impactos: document.getElementById('impactos').value,
+        statusAtividade: document.getElementById('statusAtividade').value,
+        materialsPendentes: document.getElementById('materiaisPendentes').value || "Nenhum",
+        observacoes: document.getElementById('observacoes').value || "Nenhuma",
+        fotos: [] 
+    };
 
-        const fotoInput = document.getElementById('fotos');
-        const arquivos = fotoInput ? fotoInput.files : [];
+    const fotoInput = document.getElementById('fotos');
+    const arquivos = fotoInput ? fotoInput.files : [];
 
-        // Proteção contra estouro de memória (limite máximo de 10 arquivos)
-        if (arquivos.length > 10) {
-            alert("⚠️ Limite Máximo Excedido: Você só pode selecionar no máximo 10 fotos!");
-            const botaoVerde = document.querySelector('.btn-green');
-            if (botaoVerde) {
-                botaoVerde.disabled = false;
-                botaoVerde.innerHTML = "🟢 WhatsApp / Enviar";
-            }
-            return;
+    if (arquivos.length > 10) {
+        alert("⚠️ Limite Máximo Excedido: Você só pode selecionar no máximo 10 fotos!");
+        const botaoVerde = document.querySelector('.btn-green');
+        if (botaoVerde) {
+            botaoVerde.disabled = false;
+            botaoVerde.innerHTML = "🟢 WhatsApp / Enviar";
         }
-
-        if (arquivos.length === 0) {
-            callback(dados);
-            return;
-        }
-
-        // Processamento fracionado assíncrono para evitar lentidão ou travamentos
-        let promessas = [];
-        for (let i = 0; i < arquivos.length; i++) {
-            let arquivo = arquivos[i];
-            let processarArquivo = new Promise((resolve) => {
-                let reader = new FileReader();
-                reader.onloadend = function() {
-                    resolve({
-                        base64: reader.result.split(',')[1], // Captura apenas o conteúdo puro binário codificado
-                        nome: arquivo.name,
-                        tipo: arquivo.type
-                    });
-                };
-                reader.readAsDataURL(arquivo);
-            });
-            promessas.push(processarArquivo);
-        }
-
-        Promise.all(promessas).then(resultadoLote => {
-            dados.fotos = resultadoLote;
-            callback(dados);
-        });
+        return;
     }
+
+    if (arquivos.length === 0) {
+        callback(dados);
+        return;
+    }
+
+    let promessas = [];
+    for (let i = 0; i < arquivos.length; i++) {
+        let arquivo = arquivos[i];
+        let processarArquivo = new Promise((resolve) => {
+            let reader = new FileReader();
+            reader.onloadend = function() {
+                resolve({
+                    base64: reader.result, 
+                    nome: arquivo.name,
+                    tipo: arquivo.type
+                });
+            };
+            reader.readAsDataURL(arquivo);
+        });
+        promessas.push(processarArquivo);
+    }
+
+    Promise.all(promessas).then(resultadoLote => {
+        dados.fotos = resultadoLote;
+        callback(dados);
+    });
+}
+
 
     function gerarTextoRDO(d) {
         msgPronta = `*RDO - CONSÓRCIO FORÇA SUL*\n\n`;
