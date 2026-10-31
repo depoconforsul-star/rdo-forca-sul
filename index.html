@@ -289,40 +289,59 @@
     }
 
 
-    function obterDados(callback) {
-        let colabs = [];
-        document.querySelectorAll('input[name="colab"]:checked').forEach(function(cb) { colabs.push(cb.value); });
+   function obterDados(callback) {
+    let colabs = [];
+    document.querySelectorAll('input[name="colab"]:checked').forEach(function(cb) { colabs.push(cb.value); });
 
-        let dados = {
-            disciplina: document.getElementById('disciplina').value,
-            lider: document.getElementById('lider').value,
-            usina: document.getElementById('usina').value,
-            subarea: document.getElementById('subarea').value,
-            fiscal: document.getElementById('fiscal').value,
-            colaboradores: colabs.join(', '),
-            hhProducao: document.getElementById('hhProducao').value,
-            equipamento: document.getElementById('equipamento').value,
-            atividade: document.getElementById('atividade').value,
-            desvios: document.getElementById('desvios').value,
-            impactos: document.getElementById('impactos').value,
-            statusAtividade: document.getElementById('statusAtividade').value,
-            materialsPendentes: document.getElementById('materiaisPendentes').value || "Nenhum",
-            observacoes: document.getElementById('observacoes').value || "Nenhuma",
-            fotoBase64: "", fotoNome: ""
-        };
+    let dados = {
+        disciplina: document.getElementById('disciplina').value,
+        lider: document.getElementById('lider').value,
+        usina: document.getElementById('usina').value,
+        subarea: document.getElementById('subarea').value,
+        fiscal: document.getElementById('fiscal').value,
+        colaboradores: colabs.join(', '),
+        hhProducao: document.getElementById('hhProducao').value,
+        equipamento: document.getElementById('equipamento').value,
+        atividade: document.getElementById('atividade').value,
+        desvios: document.getElementById('desvios').value,
+        impactos: document.getElementById('impactos').value,
+        statusAtividade: document.getElementById('statusAtividade').value,
+        materialsPendentes: document.getElementById('materialsPendentes').value || "Nenhum",
+        observacoes: document.getElementById('observacoes').value || "Nenhuma",
+        // Agora criamos listas vazias prontas para receber os múltiplos arquivos
+        fotosBase64: [], 
+        fotosNomes: []
+    };
 
-        let fotoInput = document.getElementById('fotos');
-        if (fotoInput.files.length > 0) {
-            let file = fotoInput.files[0];
+    let fotoInput = document.getElementById('fotos');
+    
+    if (fotoInput.files.length > 0) {
+        let arquivosLeitura = 0;
+        
+        // Passa lendo arquivo por arquivo dos que foram selecionados
+        for (let i = 0; i < fotoInput.files.length; i++) {
+            let file = fotoInput.files[i];
             let reader = new FileReader();
+            
             reader.onloadend = function() {
-                dados.fotoBase64 = reader.result;
-                dados.fotoNome = file.name;
-                callback(dados);
+                // Adiciona o resultado da conversão nas listas criadas
+                dados.fotosBase64.push(reader.result);
+                dados.fotosNomes.push(file.name);
+                
+                arquivosLeitura++;
+                
+                // Só avança e chama a resposta da planilha quando ler a última foto selecionada
+                if (arquivosLeitura === fotoInput.files.length) {
+                    callback(dados);
+                }
             };
+            
             reader.readAsDataURL(file);
-        } else { callback(dados); }
+        }
+    } else {
+        callback(dados);
     }
+}
 
     function gerarTextoRDO(d) {
         msgPronta = `*RDO - CONSÓRCIO FORÇA SUL*\n\n`;
