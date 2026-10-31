@@ -308,56 +308,12 @@ function obterDados(callback) {
         statusAtividade: document.getElementById('statusAtividade').value,
         materialsPendentes: document.getElementById('materialsPendentes').value || "Nenhum",
         observacoes: document.getElementById('observacoes').value || "Nenhuma",
-        fotosBase64: [], 
-        fotosNomes: []
+        // Removido o envio pesado de fotos em texto para não travar a carga da planilha
+        fotoBase64: "",
+        fotoNome: ""
     };
 
-    let fotoInput = document.getElementById('fotos');
-    
-    // Se não tiver fotos, avança direto de forma simples
-    if (!fotoInput || !fotoInput.files || fotoInput.files.length === 0) {
-        callback(dados);
-        return;
-    }
-
-    let arquivosLeitura = 0;
-    let totalArquivos = fotoInput.files.length;
-
-    for (let i = 0; i < totalArquivos; i++) {
-        let file = fotoInput.files[i];
-        let reader = new FileReader();
-
-        reader.onloadend = function() {
-            let img = new Image();
-            img.src = reader.result;
-            img.onload = function() {
-                let canvas = document.createElement('canvas');
-                let ctx = canvas.getContext('2d');
-                let max_width = 1200;
-                
-                if (img.width > max_width) {
-                    let scale = max_width / img.width;
-                    canvas.width = max_width;
-                    canvas.height = img.height * scale;
-                } else {
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-                }
-                
-                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                let compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-                
-                dados.fotosBase64.push(compressedBase64);
-                dados.fotosNomes.push(file.name.replace(/\.[^/.]+$/, "") + ".jpg");
-                
-                arquivosLeitura++;
-                if (arquivosLeitura === totalArquivos) {
-                    callback(dados);
-                }
-            };
-        };
-        reader.readAsDataURL(file);
-    }
+    callback(dados);
 }
 
 function gerarTextoRDO(d) {
@@ -376,7 +332,7 @@ function gerarTextoRDO(d) {
     msgPronta += `🔍 *Obs:* ${d.observacoes}\n\n`;
 
     const preview = document.getElementById('previewArea');
-    if(preview) {
+    if (preview) {
         preview.innerText = msgPronta;
         preview.style.display = "block";
     }
@@ -407,9 +363,6 @@ function enviarGrupo() {
     obterDados(function(dados) {
         gerarTextoRDO(dados);
         
-        // Alerta nativo que destrava a interface do usuário
-        alert("Formulário RDO processado!\n\nO texto foi copiado. Clique em OK para finalizar.");
-
         if(urlPlanilha) {
             fetch(urlPlanilha, {
                 method: "POST",
@@ -418,16 +371,16 @@ function enviarGrupo() {
                 body: JSON.stringify(dados)
             })
             .then(function() { 
-                window.open(linkWhatsapp, '_blank');
                 botaoVerde.disabled = false; botaoVerde.innerHTML = textoOrig;
+                window.open(linkWhatsapp, '_blank');
             })
             .catch(function() { 
-                window.open(linkWhatsapp, '_blank');
                 botaoVerde.disabled = false; botaoVerde.innerHTML = textoOrig;
+                window.open(linkWhatsapp, '_blank');
             });
         } else {
-            window.open(linkWhatsapp, '_blank');
             botaoVerde.disabled = false; botaoVerde.innerHTML = textoOrig;
+            window.open(linkWhatsapp, '_blank');
         }
     });
 }
