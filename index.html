@@ -289,7 +289,7 @@
     }
 
 
-  function obterDados(callback) {
+ function obterDados(callback) {
     let colabs = [];
     document.querySelectorAll('input[name="colab"]:checked').forEach(function(cb) { colabs.push(cb.value); });
 
@@ -316,8 +316,9 @@
     
     if (fotoInput.files.length > 0) {
         let arquivosLeitura = 0;
+        let totalArquivos = fotoInput.files.length;
         
-        for (let i = 0; i < fotoInput.files.length; i++) {
+        for (let i = 0; i < totalArquivos; i++) {
             let file = fotoInput.files[i];
             let reader = new FileReader();
             
@@ -325,13 +326,12 @@
                 let img = new Image();
                 img.src = reader.result;
                 img.onload = function() {
-                    // Configura a compressão (largura máxima de 1200px mantém ótima qualidade)
                     let canvas = document.createElement('canvas');
                     let ctx = canvas.getContext('2d');
                     let max_width = 1200;
-                    let scale = max_width / img.width;
                     
                     if (img.width > max_width) {
+                        let scale = max_width / img.width;
                         canvas.width = max_width;
                         canvas.height = img.height * scale;
                     } else {
@@ -341,14 +341,13 @@
                     
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                     
-                    // Converte reduzindo a qualidade para 70% (fica até 90% mais leve!)
                     let compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
                     
                     dados.fotosBase64.push(compressedBase64);
                     dados.fotosNomes.push(file.name.replace(/\.[^/.]+$/, "") + ".jpg");
                     
                     arquivosLeitura++;
-                    if (arquivosLeitura === fotoInput.files.length) {
+                    if (arquivosLeitura === totalArquivos) {
                         callback(dados);
                     }
                 };
@@ -359,97 +358,89 @@
         callback(dados);
     }
 }
-            
-            reader.readAsDataURL(file);
-        }
-    } else {
-        callback(dados);
-    }
+
+function gerarTextoRDO(d) {
+    msgPronta = `*RDO - CONSÓRCIO FORÇA SUL*\n\n`;
+    msgPronta += `⚙️ *Disciplina:* ${d.disciplina}\n`;
+    msgPronta += `👤 *Líder:* ${d.lider}\n`;
+    msgPronta += `🏢 *Usina:* ${d.usina} | *Subárea:* ${d.subarea}\n`;
+    msgPronta += `🕵️‍♂️ *Fiscal:* ${d.fiscal}\n\n`;
+    msgPronta += `👥 *Equipe:* ${d.colaboradores || 'Nenhuma'}\n\n`;
+    msgPronta += `📊 *Tipo:* ${d.hhProducao} | 🚜 *Equipamento:* ${d.equipamento}\n`;
+    msgPronta += `📝 *Atividade:* ${d.atividade}\n`;
+    msgPronta += `⚠️ *Desvios:* ${d.desvios}\n`;
+    msgPronta += `🛑 *Impactos M.O:* ${d.impactos}\n\n`;
+    msgPronta += `📌 *Status:* ${d.statusAtividade}\n`;
+    msgPronta += `📦 *Materiais Pendentes:* ${d.materialsPendentes}\n`;
+    msgPronta += `🔍 *Obs:* ${d.observacoes}\n\n`;
+
+    const preview = document.getElementById('previewArea');
+    preview.innerText = msgPronta;
+    preview.style.display = "block";
+    navigator.clipboard.writeText(msgPronta);
 }
 
-    function gerarTextoRDO(d) {
-        msgPronta = `*RDO - CONSÓRCIO FORÇA SUL*\n\n`;
-        msgPronta += `⚙️ *Disciplina:* ${d.disciplina}\n`;
-        msgPronta += `👤 *Líder:* ${d.lider}\n`;
-        msgPronta += `🏢 *Usina:* ${d.usina} | *Subárea:* ${d.subarea}\n`;
-        msgPronta += `🕵️‍♂️ *Fiscal:* ${d.fiscal}\n\n`;
-        msgPronta += `👥 *Equipe:* ${d.colaboradores || 'Nenhuma'}\n\n`;
-        msgPronta += `📊 *Tipo:* ${d.hhProducao} | 🚜 *Equipamento:* ${d.equipamento}\n`;
-        msgPronta += `📝 *Atividade:* ${d.atividade}\n`;
-        msgPronta += `⚠️ *Desvios:* ${d.desvios}\n`;
-        msgPronta += `🛑 *Impactos M.O:* ${d.impactos}\n\n`;
-        msgPronta += `📌 *Status:* ${d.statusAtividade}\n`;
-        msgPronta += `📦 *Materiais Pendentes:* ${d.materialsPendentes}\n`;
-        msgPronta += `🔍 *Obs:* ${d.observacoes}\n\n`;
+function forçarMensagemManual() {
+    const form = document.getElementById('rdoForm');
+    if(!form.checkValidity()) { alert("Preencha os campos obrigatórios!"); form.reportValidity(); return; }
+    obterDados(function(dados) {
+        gerarTextoRDO(dados);
+        alert("Mensagem estruturada e copiada!");
+    });
+}
 
+function enviarGrupo() {
+    const form = document.getElementById('rdoForm');
+    if(!form.checkValidity()) { alert("Preencha todos os campos obrigatórios!"); form.reportValidity(); return; }
+
+    const botaoVerde = document.querySelector('.btn-green');
+    botaoVerde.disabled = true;
+    const textoOrig = botaoVerde.innerHTML;
+    botaoVerde.innerHTML = "⏳ Enviando...";
+
+    const urlPlanilha = document.getElementById('scriptUrl').value;
+    const linkWhatsapp = document.getElementById('whatsappLink').value || "https://whatsapp.com";
+
+    obterDados(function(dados) {
+        gerarTextoRDO(dados);
         
-        const preview = document.getElementById('previewArea');
-        preview.innerText = msgPronta;
-        preview.style.display = "block";
-        navigator.clipboard.writeText(msgPronta);
-    }
+        alert("Formulário RDO enviado com sucesso!\n\nO relatório foi copiado. Clique em OK para ir ao WhatsApp.");
 
-    function forçarMensagemManual() {
-        const form = document.getElementById('rdoForm');
-                if(!form.checkValidity()) { alert("Preencha os campos obrigatórios!"); form.reportValidity(); return; }
-        obterDados(function(dados) {
-            gerarTextoRDO(dados);
-            alert("Mensagem estruturada e copiada!");
-        });
-    }
-
-    function enviarGrupo() {
-        const form = document.getElementById('rdoForm');
-        if(!form.checkValidity()) { alert("Preencha todos os campos obrigatórios!"); form.reportValidity(); return; }
-
-        const botaoVerde = document.querySelector('.btn-green');
-        botaoVerde.disabled = true;
-        const textoOrig = botaoVerde.innerHTML;
-        botaoVerde.innerHTML = "⏳ Enviando...";
-
-        const urlPlanilha = document.getElementById('scriptUrl').value;
-        const linkWhatsapp = document.getElementById('whatsappLink').value || "https://whatsapp.com";
-
-        obterDados(function(dados) {
-            gerarTextoRDO(dados);
-            
-            alert("Formulário RDO enviado com sucesso!\n\nO relatório foi copiado. Clique em OK para ir ao WhatsApp.");
-
-            if(urlPlanilha) {
-                fetch(urlPlanilha, {
-                    method: "POST",
-                    mode: "no-cors",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(dados)
-                })
-                .then(function() { 
-                    window.open(linkWhatsapp, '_blank');
-                    botaoVerde.disabled = false; botaoVerde.innerHTML = textoOrig;
-                })
-                .catch(function() { 
-                    window.open(linkWhatsapp, '_blank');
-                    botaoVerde.disabled = false; botaoVerde.innerHTML = textoOrig;
-                });
-            } else {
+        if(urlPlanilha) {
+            fetch(urlPlanilha, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(dados)
+            })
+            .then(function() { 
                 window.open(linkWhatsapp, '_blank');
                 botaoVerde.disabled = false; botaoVerde.innerHTML = textoOrig;
-            }
-        });
-    }
+            })
+            .catch(function() { 
+                window.open(linkWhatsapp, '_blank');
+                botaoVerde.disabled = false; botaoVerde.innerHTML = textoOrig;
+            });
+        } else {
+            window.open(linkWhatsapp, '_blank');
+            botaoVerde.disabled = false; botaoVerde.innerHTML = textoOrig;
+        }
+    });
+}
 
-    function toggleAdmin() {
-        const senha = prompt("Digite a senha do Administrator:");
-        if (senha === "2026") { document.getElementById('adminPanel').classList.toggle('hidden'); }
-        else { alert("Senha incorreta!"); }
-    }
+function toggleAdmin() {
+    const senha = prompt("Digite a senha do Administrator:");
+    if (senha === "2026") { document.getElementById('adminPanel').classList.toggle('hidden'); }
+    else { alert("Senha incorreta!"); }
+}
 
-    function saveAdmin() { 
-        localStorage.setItem('scriptUrl', document.getElementById('scriptUrl').value);
-        localStorage.setItem('whatsappLink', document.getElementById('whatsappLink').value);
-        alert("Configurações salvas!"); 
-        document.getElementById('adminPanel').classList.add('hidden');
-        carregarDadosPlanilha();
-    }
+function saveAdmin() { 
+    localStorage.setItem('scriptUrl', document.getElementById('scriptUrl').value);
+    localStorage.setItem('whatsappLink', document.getElementById('whatsappLink').value);
+    alert("Configurações salvas!"); 
+    document.getElementById('adminPanel').classList.add('hidden');
+    carregarDadosPlanilha();
+}
 </script>
 
 </body>
