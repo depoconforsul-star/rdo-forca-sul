@@ -308,43 +308,49 @@ function obterDados(callback) {
         statusAtividade: document.getElementById('statusAtividade').value,
         materialsPendentes: document.getElementById('materialsPendentes').value || "Nenhum",
         observacoes: document.getElementById('observacoes').value || "Nenhuma",
-        // Removido o envio pesado de fotos em texto para não travar a carga da planilha
-        fotoBase64: "",
-        fotoNome: ""
+        fotos: [] 
     };
 
-    callback(dados);
-}
+    const campoFotos = document.getElementById('fotos');
+    const arquivos = campoFotos ? campoFotos.files : [];
 
-function gerarTextoRDO(d) {
-    msgPronta = `*RDO - CONSÓRCIO FORÇA SUL*\n\n`;
-    msgPronta += `⚙️ *Disciplina:* ${d.disciplina}\n`;
-    msgPronta += `👤 *Líder:* ${d.lider}\n`;
-    msgPronta += `🏢 *Usina:* ${d.usina} | *Subárea:* ${d.subarea}\n`;
-    msgPronta += `🕵️‍♂️ *Fiscal:* ${d.fiscal}\n\n`;
-    msgPronta += `👥 *Equipe:* ${d.colaboradores || 'Nenhuma'}\n\n`;
-    msgPronta += `📊 *Tipo:* ${d.hhProducao} | 🚜 *Equipamento:* ${d.equipamento}\n`;
-    msgPronta += `📝 *Atividade:* ${d.atividade}\n`;
-    msgPronta += `⚠️ *Desvios:* ${d.desvios}\n`;
-    msgPronta += `🛑 *Impactos M.O:* ${d.impactos}\n\n`;
-    msgPronta += `📌 *Status:* ${d.statusAtividade}\n`;
-    msgPronta += `📦 *Materiais Pendentes:* ${d.materialsPendentes}\n`;
-    msgPronta += `🔍 *Obs:* ${d.observacoes}\n\n`;
-
-    const preview = document.getElementById('previewArea');
-    if (preview) {
-        preview.innerText = msgPronta;
-        preview.style.display = "block";
+    // Limitação estrita de no máximo 10 fotos
+    if (arquivos.length > 10) {
+        alert("⚠️ Atenção: Você pode selecionar no máximo 10 fotos por relatório!");
+        const botaoVerde = document.querySelector('.btn-green');
+        if (botaoVerde) {
+            botaoVerde.disabled = false;
+            botaoVerde.innerHTML = "🟢 WhatsApp / Enviar";
+        }
+        return;
     }
-    navigator.clipboard.writeText(msgPronta);
-}
 
-function forçarMensagemManual() {
-    const form = document.getElementById('rdoForm');
-    if(!form.checkValidity()) { alert("Preencha os campos obrigatórios!"); form.reportValidity(); return; }
-    obterDados(function(dados) {
-        gerarTextoRDO(dados);
-        alert("Mensagem estruturada e copiada!");
+    if (arquivos.length === 0) {
+        callback(dados);
+        return;
+    }
+
+    // Leitura assíncrona fracionada para não congelar o navegador
+    let promessas = [];
+    for (let i = 0; i < arquivos.length; i++) {
+        let arquivo = arquivos[i];
+        let lerArquivo = new Promise((resolve) => {
+            let reader = new FileReader();
+            reader.onloadend = function() {
+                resolve({
+                    base64: reader.result.split(',')[1], // Obtém apenas a string limpa dos dados binários
+                    nome: arquivo.name,
+                    tipo: arquivo.type
+                });
+            };
+            reader.readAsDataURL(arquivo);
+        });
+        promessas.push(lerArquivo);
+    }
+
+    Promise.all(promessas).then(resultadoFotos => {
+        dados.fotos = resultadoFotos;
+        callback(dados);
     });
 }
 
@@ -355,26 +361,29 @@ function enviarGrupo() {
     const botaoVerde = document.querySelector('.btn-green');
     botaoVerde.disabled = true;
     const textoOrig = botaoVerde.innerHTML;
-    botaoVerde.innerHTML = "⏳ Enviando...";
+    botaoVerde.innerHTML = "⏳ Enviando Dados e Fotos...";
 
     const urlPlanilha = document.getElementById('scriptUrl').value;
     const linkWhatsapp = document.getElementById('whatsappLink').value || "https://whatsapp.com";
 
     obterDados(function(dados) {
+        if (!dados) return; // Cancela se a validação de quantidade de fotos falhar
+        
         gerarTextoRDO(dados);
         
         if(urlPlanilha) {
+            // Mudança crucial: enviamos como texto plano para evitar bloqueios de CORS por pre-flight
             fetch(urlPlanilha, {
                 method: "POST",
-                mode: "no-cors",
-                headers: { "Content-Type": "application/json" },
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
                 body: JSON.stringify(dados)
             })
             .then(function() { 
                 botaoVerde.disabled = false; botaoVerde.innerHTML = textoOrig;
                 window.open(linkWhatsapp, '_blank');
             })
-            .catch(function() { 
+            .catch(function(err) { 
+                console.error("Erro no envio:", err);
                 botaoVerde.disabled = false; botaoVerde.innerHTML = textoOrig;
                 window.open(linkWhatsapp, '_blank');
             });
@@ -384,21 +393,3 @@ function enviarGrupo() {
         }
     });
 }
-
-function toggleAdmin() {
-    const senha = prompt("Digite a senha do Administrator:");
-    if (senha === "2026") { document.getElementById('adminPanel').classList.toggle('hidden'); }
-    else { alert("Senha incorreta!"); }
-}
-
-function saveAdmin() { 
-    localStorage.setItem('scriptUrl', document.getElementById('scriptUrl').value);
-    localStorage.setItem('whatsappLink', document.getElementById('whatsappLink').value);
-    alert("Configurações salvas!"); 
-    document.getElementById('adminPanel').classList.add('hidden');
-    carregarDadosPlanilha();
-}
-</script>
-
-</body>
-</html>
