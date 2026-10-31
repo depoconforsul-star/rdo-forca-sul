@@ -357,7 +357,7 @@
 <script>
     // ... Mantenha as outras funções anteriores (como obterDados, carregarDadosPlanilha, etc.) aqui acima ...
 
-    function enviarGrupo() {
+        function enviarGrupo() {
         const form = document.getElementById('rdoForm');
         if(!form.checkValidity()) { alert("Preencha todos os campos obrigatórios!"); form.reportValidity(); return; }
 
@@ -372,11 +372,11 @@
         obterDados(function(dados) {
             gerarTextoRDO(dados);
             
-            // Guarda o link para abrir depois
             window.linkDestinoWhatsapp = linkWhatsapp;
             
-            // Abre a modal estilizada que colamos no final do arquivo
-            document.getElementById('modalSucesso').style.display = 'flex';
+            // Abre a modal removendo o bloqueio invisível
+            const modal = document.getElementById('modalSucesso');
+            modal.style.setProperty('display', 'flex', 'important');
 
             if(urlPlanilha) {
                 fetch(urlPlanilha, {
@@ -397,30 +397,20 @@
         });
     }
 
-    function toggleAdmin() {
-        const senha = prompt("Digite a senha do Administrador:");
-        if (senha === "2026") { document.getElementById('adminPanel').classList.toggle('hidden'); }
-        else { alert("Senha incorreta!"); }
-    }
-
-    function saveAdmin() { 
-        localStorage.setItem('scriptUrl', document.getElementById('scriptUrl').value);
-        localStorage.setItem('whatsappLink', document.getElementById('whatsappLink').value);
-        alert("Configurações salvas!"); 
-        document.getElementById('adminPanel').classList.add('hidden');
-        carregarDadosPlanilha();
-    }
-
     function fecharModalSucesso() {
-        document.getElementById('modalSucesso').style.display = 'none';
+        // Fecha a modal por completo e libera a tela novamente
+        const modal = document.getElementById('modalSucesso');
+        modal.style.setProperty('display', 'none', 'important');
+        
         if (window.linkDestinoWhatsapp) {
             window.open(window.linkDestinoWhatsapp, '_blank');
         }
     }
+
 </script>
 
 <!-- Modal Customizada de Sucesso -->
-<div id="modalSucesso" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); justify-content: center; align-items: center;">
+<div id="modalSucesso" style="display: none !important; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); justify-content: center; align-items: center;">
     <div style="background-color: var(--card-bg, #ffffff); width: 90%; max-width: 450px; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.2); font-family: 'Segoe UI', sans-serif; text-align: center; animation: modalFadeIn 0.3s ease-out;">
         <div style="height: 6px; display: flex;">
             <div style="flex: 1; background-color: var(--logo-green, #00a859);"></div>
