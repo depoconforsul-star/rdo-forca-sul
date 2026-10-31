@@ -289,7 +289,7 @@
     }
 
 
-function obterDados(callback) {
+async function obterDados(callback) {
     let colabs = [];
     document.querySelectorAll('input[name="colab"]:checked').forEach(function(cb) { colabs.push(cb.value); });
 
@@ -315,50 +315,57 @@ function obterDados(callback) {
     let fotoInput = document.getElementById('fotos');
     
     if (fotoInput && fotoInput.files && fotoInput.files.length > 0) {
-        let arquivosLeitura = 0;
-        let totalArquivos = fotoInput.files.length;
-        
-        for (let i = 0; i < totalArquivos; i++) {
-            let file = fotoInput.files[i];
-            let reader = new FileReader();
-            
-            reader.onloadend = (function(arquivoAtual) {
-                return function() {
-                    let img = new Image();
-                    img.src = reader.result;
-                    img.onload = function() {
-                        let canvas = document.createElement('canvas');
-                        let ctx = canvas.getContext('2d');
-                        let max_width = 1200;
-                        
-                        if (img.width > max_width) {
-                            let scale = max_width / img.width;
-                            canvas.width = max_width;
-                            canvas.height = img.height * scale;
-                        } else {
-                            canvas.width = img.width;
-                            canvas.height = img.height;
-                        }
-                        
-                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        
-                        let compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-                        
-                        dados.fotosBase64.push(compressedBase64);
-                        dados.fotosNomes.push(arquivoAtual.name.replace(/\.[^/.]+$/, "") + ".jpg");
-                        
-                        arquivosLeitura++;
-                        if (arquivosLeitura === totalArquivos) {
-                            callback(dados);
-                        }
-                    };
-                };
-            })(file);
-            reader.readAsDataURL(file);
+        // Processa cada foto com segurança garantindo que o código espere
+        for (let i = 0; i < fotoInput.files.length; i++) {
+            try {
+                let file = fotoInput.files[i];
+                let compressedData = await comprimirFoto(file);
+                dados.fotosBase64.push(compressedData.base64);
+                dados.fotosNomes.push(compressedData.nome);
+            } catch (err) {
+                console.error("Erro ao processar foto:", err);
+            }
         }
-    } else {
-        callback(dados);
     }
+    
+    // Executa o envio para a planilha de forma limpa
+    callback(dados);
+}
+
+// Função auxiliar mágica que impede o travamento do navegador
+function comprimirFoto(file) {
+    return new Promise((resolve, reject) => {
+        let reader = new FileReader();
+        reader.onloadend = function() {
+            let img = new Image();
+            img.src = reader.result;
+            img.onload = function() {
+                let canvas = document.createElement('canvas');
+                let ctx = canvas.getContext('2d');
+                let max_width = 1200;
+                
+                if (img.width > max_width) {
+                    let scale = max_width / img.width;
+                    canvas.width = max_width;
+                    canvas.height = img.height * scale;
+                } else {
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                }
+                
+                ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                let compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                
+                resolve({
+                    base64: compressedBase64,
+                    nome: file.name.replace(/\.[^/.]+$/, "") + ".jpg"
+                });
+            };
+            img.onerror = () => reject("Erro ao carregar imagem");
+        };
+        reader.onerror = () => reject("Erro ao ler arquivo");
+        reader.readAsDataURL(file);
+    });
 }
 
 function gerarTextoRDO(d) {
