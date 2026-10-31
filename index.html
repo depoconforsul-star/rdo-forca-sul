@@ -289,7 +289,7 @@
     }
 
 
-   function obterDados(callback) {
+  function obterDados(callback) {
     let colabs = [];
     document.querySelectorAll('input[name="colab"]:checked').forEach(function(cb) { colabs.push(cb.value); });
 
@@ -308,7 +308,6 @@
         statusAtividade: document.getElementById('statusAtividade').value,
         materialsPendentes: document.getElementById('materialsPendentes').value || "Nenhum",
         observacoes: document.getElementById('observacoes').value || "Nenhuma",
-        // Agora criamos listas vazias prontas para receber os múltiplos arquivos
         fotosBase64: [], 
         fotosNomes: []
     };
@@ -318,23 +317,48 @@
     if (fotoInput.files.length > 0) {
         let arquivosLeitura = 0;
         
-        // Passa lendo arquivo por arquivo dos que foram selecionados
         for (let i = 0; i < fotoInput.files.length; i++) {
             let file = fotoInput.files[i];
             let reader = new FileReader();
             
             reader.onloadend = function() {
-                // Adiciona o resultado da conversão nas listas criadas
-                dados.fotosBase64.push(reader.result);
-                dados.fotosNomes.push(file.name);
-                
-                arquivosLeitura++;
-                
-                // Só avança e chama a resposta da planilha quando ler a última foto selecionada
-                if (arquivosLeitura === fotoInput.files.length) {
-                    callback(dados);
-                }
+                let img = new Image();
+                img.src = reader.result;
+                img.onload = function() {
+                    // Configura a compressão (largura máxima de 1200px mantém ótima qualidade)
+                    let canvas = document.createElement('canvas');
+                    let ctx = canvas.getContext('2d');
+                    let max_width = 1200;
+                    let scale = max_width / img.width;
+                    
+                    if (img.width > max_width) {
+                        canvas.width = max_width;
+                        canvas.height = img.height * scale;
+                    } else {
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                    }
+                    
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    
+                    // Converte reduzindo a qualidade para 70% (fica até 90% mais leve!)
+                    let compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                    
+                    dados.fotosBase64.push(compressedBase64);
+                    dados.fotosNomes.push(file.name.replace(/\.[^/.]+$/, "") + ".jpg");
+                    
+                    arquivosLeitura++;
+                    if (arquivosLeitura === fotoInput.files.length) {
+                        callback(dados);
+                    }
+                };
             };
+            reader.readAsDataURL(file);
+        }
+    } else {
+        callback(dados);
+    }
+}
             
             reader.readAsDataURL(file);
         }
