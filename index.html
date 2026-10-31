@@ -289,7 +289,7 @@
     }
 
 
- function obterDados(callback) {
+function obterDados(callback) {
     let colabs = [];
     document.querySelectorAll('input[name="colab"]:checked').forEach(function(cb) { colabs.push(cb.value); });
 
@@ -314,7 +314,7 @@
 
     let fotoInput = document.getElementById('fotos');
     
-    if (fotoInput.files.length > 0) {
+    if (fotoInput && fotoInput.files && fotoInput.files.length > 0) {
         let arquivosLeitura = 0;
         let totalArquivos = fotoInput.files.length;
         
@@ -322,36 +322,38 @@
             let file = fotoInput.files[i];
             let reader = new FileReader();
             
-            reader.onloadend = function() {
-                let img = new Image();
-                img.src = reader.result;
-                img.onload = function() {
-                    let canvas = document.createElement('canvas');
-                    let ctx = canvas.getContext('2d');
-                    let max_width = 1200;
-                    
-                    if (img.width > max_width) {
-                        let scale = max_width / img.width;
-                        canvas.width = max_width;
-                        canvas.height = img.height * scale;
-                    } else {
-                        canvas.width = img.width;
-                        canvas.height = img.height;
-                    }
-                    
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    
-                    let compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-                    
-                    dados.fotosBase64.push(compressedBase64);
-                    dados.fotosNomes.push(file.name.replace(/\.[^/.]+$/, "") + ".jpg");
-                    
-                    arquivosLeitura++;
-                    if (arquivosLeitura === totalArquivos) {
-                        callback(dados);
-                    }
+            reader.onloadend = (function(arquivoAtual) {
+                return function() {
+                    let img = new Image();
+                    img.src = reader.result;
+                    img.onload = function() {
+                        let canvas = document.createElement('canvas');
+                        let ctx = canvas.getContext('2d');
+                        let max_width = 1200;
+                        
+                        if (img.width > max_width) {
+                            let scale = max_width / img.width;
+                            canvas.width = max_width;
+                            canvas.height = img.height * scale;
+                        } else {
+                            canvas.width = img.width;
+                            canvas.height = img.height;
+                        }
+                        
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        
+                        let compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                        
+                        dados.fotosBase64.push(compressedBase64);
+                        dados.fotosNomes.push(arquivoAtual.name.replace(/\.[^/.]+$/, "") + ".jpg");
+                        
+                        arquivosLeitura++;
+                        if (arquivosLeitura === totalArquivos) {
+                            callback(dados);
+                        }
+                    };
                 };
-            };
+            })(file);
             reader.readAsDataURL(file);
         }
     } else {
