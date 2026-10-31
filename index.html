@@ -315,7 +315,6 @@ async function obterDados(callback) {
     let fotoInput = document.getElementById('fotos');
     
     if (fotoInput && fotoInput.files && fotoInput.files.length > 0) {
-        // Processa cada foto com segurança garantindo que o código espere
         for (let i = 0; i < fotoInput.files.length; i++) {
             try {
                 let file = fotoInput.files[i];
@@ -327,12 +326,9 @@ async function obterDados(callback) {
             }
         }
     }
-    
-    // Executa o envio para a planilha de forma limpa
     callback(dados);
 }
 
-// Função auxiliar mágica que impede o travamento do navegador
 function comprimirFoto(file) {
     return new Promise((resolve, reject) => {
         let reader = new FileReader();
@@ -389,16 +385,18 @@ function gerarTextoRDO(d) {
     navigator.clipboard.writeText(msgPronta);
 }
 
-function forçarMensagemManual() {
+// Adicionado o termo 'async' obrigatório aqui para casar com a leitura de fotos
+async function forçarMensagemManual() {
     const form = document.getElementById('rdoForm');
     if(!form.checkValidity()) { alert("Preencha os campos obrigatórios!"); form.reportValidity(); return; }
-    obterDados(function(dados) {
+    await obterDados(function(dados) {
         gerarTextoRDO(dados);
         alert("Mensagem estruturada e copiada!");
     });
 }
 
-function enviarGrupo() {
+// Adicionado o termo 'async' obrigatório aqui para o botão destravar na hora
+async function enviarGrupo() {
     const form = document.getElementById('rdoForm');
     if(!form.checkValidity()) { alert("Preencha todos os campos obrigatórios!"); form.reportValidity(); return; }
 
@@ -410,7 +408,7 @@ function enviarGrupo() {
     const urlPlanilha = document.getElementById('scriptUrl').value;
     const linkWhatsapp = document.getElementById('whatsappLink').value || "https://whatsapp.com";
 
-    obterDados(function(dados) {
+    await obterDados(function(dados) {
         gerarTextoRDO(dados);
         
         alert("Formulário RDO enviado com sucesso!\n\nO relatório foi copiado. Clique em OK para ir ao WhatsApp.");
