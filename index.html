@@ -290,7 +290,7 @@
         }
     }
 
-   function obterDados(callback) {
+  function obterDados(callback) {
     let colabs = [];
     document.querySelectorAll('input[name="colab"]:checked').forEach(function(cb) { colabs.push(cb.value); });
 
@@ -333,20 +333,43 @@
     let promessas = [];
     for (let i = 0; i < arquivos.length; i++) {
         let arquivo = arquivos[i];
-        let processarArquivo = new Promise((resolve) => {
+        let processarEComprimir = new Promise((resolve) => {
             let reader = new FileReader();
             reader.onloadend = function() {
-                // Remove o cabeçalho 'data:image/...;base64,' diretamente no navegador antes do envio
-                let base64Puro = reader.result.split(',')[1];
-                resolve({
-                    base64: base64Puro, 
-                    nome: arquivo.name,
-                    tipo: arquivo.type
-                });
+                let img = new Image();
+                img.src = reader.result;
+                img.onload = function() {
+                    // Configuração da compressão: Define a largura máxima ideal
+                    let maxLargura = 1280; 
+                    let larguraOrig = img.width;
+                    let alturaOrig = img.height;
+                    
+                    if (larguraOrig > maxLargura) {
+                        alturaOrig = Math.round((maxLargura * alturaOrig) / larguraOrig);
+                        larguraOrig = maxLargura;
+                    }
+                    
+                    // Desenha a imagem reduzida em um canvas invisível
+                    let canvas = document.createElement('canvas');
+                    canvas.width = larguraOrig;
+                    canvas.height = alturaOrig;
+                    let ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, larguraOrig, alturaOrig);
+                    
+                    // Converte o canvas de volta para base64 comprimindo a qualidade para 70%
+                    let base64Comprimido = canvas.toDataURL('image/jpeg', 0.7);
+                    let fragmentos = base64Comprimido.split(',');
+                    
+                    resolve({
+                        base64: fragmentos, 
+                        nome: arquivo.name.replace(/\.[^/.]+$/, "") + ".jpg", // Força extensão leve .jpg
+                        tipo: 'image/jpeg'
+                    });
+                };
             };
             reader.readAsDataURL(arquivo);
         });
-        promessas.push(processarArquivo);
+        promessas.push(processarEComprimir);
     }
 
     Promise.all(promessas).then(resultadoLote => {
