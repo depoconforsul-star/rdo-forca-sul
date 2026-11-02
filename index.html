@@ -422,15 +422,28 @@ function enviarGrupo() {
     if(!form.checkValidity()) { alert("Preencha todos os campos obrigatórios!"); form.reportValidity(); return; }
 
     const botaoVerde = document.querySelector('.btn-green');
+    
+    // TRAVA ABSOLUTA: Se já estiver enviando, ignora qualquer segundo clique
+    if (botaoVerde.disabled || botaoVerde.innerHTML.includes("⏳")) {
+        return;
+    }
+    
     botaoVerde.disabled = true;
-    const textoOrig = botaoVerde.innerHTML;
+    botaoVerde.style.opacity = "0.5";
+    botaoVerde.style.cursor = "not-allowed";
     botaoVerde.innerHTML = "⏳ Enviando Dados e Fotos...";
 
     const urlPlanilha = document.getElementById('scriptUrl').value;
     const linkWhatsapp = document.getElementById('whatsappLink').value || "https://whatsapp.com";
 
     obterDados(function(dados) {
-        if (!dados) return; 
+        if (!dados) {
+            botaoVerde.disabled = false;
+            botaoVerde.style.opacity = "1";
+            botaoVerde.style.cursor = "pointer";
+            botaoVerde.innerHTML = "🟢 WhatsApp / Enviar";
+            return; 
+        }
         
         gerarTextoRDO(dados);
         
@@ -443,18 +456,14 @@ function enviarGrupo() {
                 body: JSON.stringify(dados)
             })
             .then(function() { 
-                // Restaura o botão verde
-                botaoVerde.disabled = false; 
-                botaoVerde.innerHTML = textoOrig;
-                
-                // === NOVO: LIMPA O FORMULÁRIO PARA EVITAR DUPLICIDADE ===
+                // Executa a limpeza forçada dos campos imediatamente após a resposta do servidor
                 form.reset(); 
                 
-                // Esconde a área de pré-visualização do texto
+                // Esconde a área de texto do WhatsApp antiga
                 const preview = document.getElementById('previewArea');
                 if (preview) preview.style.display = "none";
                 
-                // Recarrega a data de hoje no calendário limpo
+                // Restaura o calendário para a data atual
                 const inputData = document.getElementById('dataRelatorio');
                 if (inputData) {
                     const hoje = new Date();
@@ -464,55 +473,26 @@ function enviarGrupo() {
                     inputData.value = ano + "-" + mes + "-" + dia;
                 }
                 
-                // Abre o WhatsApp por último
+                // Libera o botão novamente para o próximo registro
+                botaoVerde.disabled = false; 
+                botaoVerde.style.opacity = "1";
+                botaoVerde.style.cursor = "pointer";
+                botaoVerde.innerHTML = "🟢 WhatsApp / Enviar";
+                
+                // Abre o WhatsApp por último, após garantir a limpeza da tela
                 window.open(linkWhatsapp, '_blank');
             })
             .catch(function(err) { 
                 console.error("Erro na transmissão do pacote:", err);
-                botaoVerde.disabled = false; botaoVerde.innerHTML = textoOrig;
+                botaoVerde.disabled = false; botaoVerde.style.opacity = "1"; botaoVerde.style.cursor = "pointer"; botaoVerde.innerHTML = "🟢 WhatsApp / Enviar";
                 window.open(linkWhatsapp, '_blank');
             });
         } else {
-            botaoVerde.disabled = false; botaoVerde.innerHTML = textoOrig;
+            botaoVerde.disabled = false; botaoVerde.style.opacity = "1"; botaoVerde.style.cursor = "pointer"; botaoVerde.innerHTML = "🟢 WhatsApp / Enviar";
             window.open(linkWhatsapp, '_blank');
         }
     });
 }
-
-
-function toggleAdmin() {
-    const senha = prompt("Digite a senha do Administrator:");
-    if (senha === "2026") { 
-        const painel = document.getElementById('adminPanel');
-        if (painel) painel.classList.toggle('hidden'); 
-    } else { 
-        alert("Senha incorreta!"); 
-    }
-}
-
-function saveAdmin() {
-    const urlScript = document.getElementById('scriptUrl').value;
-    const linkWhats = document.getElementById('whatsappLink').value;
-    localStorage.setItem('scriptUrl', urlScript);
-    localStorage.setItem('whatsappLink', linkWhats);
-    alert("Configurações salvas!");
-    document.getElementById('adminPanel').classList.add('hidden');
-    if (typeof carregarDadosPlanilha === "function") {
-        carregarDadosPlanilha();
-    }
-}
-
-// Coloca a data atual automaticamente assim que a página termina de carregar
-window.addEventListener('DOMContentLoaded', () => {
-    const inputData = document.getElementById('dataRelatorio');
-    if (inputData) {
-        const hoje = new Date();
-        const ano = hoje.getFullYear();
-        const mes = String(hoje.getMonth() + 1).padStart(2, '0');
-        const dia = String(hoje.getDate()).padStart(2, '0');
-        inputData.value = ano + "-" + mes + "-" + dia;
-    }
-});
 </script>
 </body>
 </html>
