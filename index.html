@@ -244,7 +244,14 @@
 <script>
     let msgPronta = "";
 
-    window.onload = function() {
+       window.onload = function() {
+        // === NOVO: Lê a URL da planilha direto do link se ela for enviada ===
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlDoLink = urlParams.get('url');
+        if (urlDoLink) {
+            localStorage.setItem('scriptUrl', urlDoLink);
+        }
+
         if(localStorage.getItem('scriptUrl')) {
             document.getElementById('scriptUrl').value = localStorage.getItem('scriptUrl');
         }
