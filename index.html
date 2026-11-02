@@ -467,15 +467,26 @@
         else { alert("Senha incorreta!"); }
     }
 
-   function saveAdmin() {
-    localStorage.setItem('scriptUrl', document.getElementById('scriptUrl').value);
-    localStorage.setItem('whatsappLink', document.getElementById('whatsappLink').value);
+  function saveAdmin() {
+    const urlScript = document.getElementById('scriptUrl').value;
+    const linkWhats = document.getElementById('whatsappLink').value;
+    localStorage.setItem('scriptUrl', urlScript);
+    localStorage.setItem('whatsappLink', linkWhats);
     alert("Configurações salvas!");
     document.getElementById('adminPanel').classList.add('hidden');
-    carregarDadosPlanilha();
-} // <-- ESSA CHAVE FECHA CORRETAMENTE O SAVEADMIN
+    if (typeof carregarDadosPlanilha === "function") {
+        carregarDadosPlanilha();
+    }
+}
 
-// Define o dia atual de forma automática no campo de calendário assim que a página carrega
+function toggleAdmin() {
+    const painel = document.getElementById('adminPanel');
+    if (painel) {
+        painel.classList.toggle('hidden');
+    }
+}
+
+// Coloca a data atual automaticamente assim que a página termina de carregar
 window.addEventListener('DOMContentLoaded', () => {
     const inputData = document.getElementById('dataRelatorio');
     if (inputData) {
@@ -486,8 +497,7 @@ window.addEventListener('DOMContentLoaded', () => {
         inputData.value = ano + "-" + mes + "-" + dia;
     }
 });
-    
 </script>
-
 </body>
 </html>
+
