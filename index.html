@@ -110,7 +110,13 @@
         <input type="text" id="whatsappLink" value="https://whatsapp.com" style="margin-bottom: 10px;">
         <button onclick="saveAdmin()" style="padding: 8px 15px; background: var(--logo-blue); color: white; border: none; border-radius: 4px; cursor: pointer;">Salvar</button>
     </div>
-    <form id="rdoForm" onsubmit="event.preventDefault();">
+       <form id="rdoForm" onsubmit="event.preventDefault();">
+        <div class="card border-blue">
+            <h3>Data do Relatório <span>*</span></h3>
+            <div class="tip-box">💡 Selecione a data de execução das atividades descritas.</div>
+            <input type="date" id="dataRelatorio" required>
+        </div>
+
         <div class="card border-blue">
             <h3>Disciplina <span>*</span></h3>
             <div class="tip-box">💡 Escolha o setor de engenharia responsável pela atividade técnica.</div>
@@ -295,6 +301,7 @@
     document.querySelectorAll('input[name="colab"]:checked').forEach(function(cb) { colabs.push(cb.value); });
 
     let dados = {
+        dataRelatorio: document.getElementById('dataRelatorio').value, // ADICIONE ESTA LINHA EXATAMENTE AQUI
         disciplina: document.getElementById('disciplina').value,
         lider: document.getElementById('lider').value,
         usina: document.getElementById('usina').value,
@@ -378,8 +385,11 @@
     });
 }
 
-    function gerarTextoRDO(d) {
-        msgPronta = `*RDO - CONSÓRCIO FORÇA SUL*\n\n`;
+        let msgPronta = " *RDO - CONSÓRCIO FORÇA SUL*\n\n";
+    if (d.dataRelatorio) {
+        const [ano, mes, dia] = d.dataRelatorio.split('-');
+        msgPronta += `📅 *Data do Relatório:* ${dia}/${mes}/${ano}\n`;
+    }
         msgPronta += `⚙️ *Disciplina:* ${d.disciplina}\n`;
         msgPronta += `👤 *Líder:* ${d.lider}\n`;
         msgPronta += `🏢 *Usina:* ${d.usina} | *Subárea:* ${d.subarea}\n`;
@@ -459,12 +469,25 @@
     }
 
     function saveAdmin() { 
-        localStorage.setItem('scriptUrl', document.getElementById('scriptUrl').value);
-        localStorage.setItem('whatsappLink', document.getElementById('whatsappLink').value);
-        alert("Configurações salvas!"); 
+                localStorage.setItem('whatsappLink', document.getElementById('whatsappLink').value);
+        alert("Configurações salvas!");
         document.getElementById('adminPanel').classList.add('hidden');
         carregarDadosPlanilha();
     }
+
+    // Define o dia atual de forma automática no campo de calendário assim que a página carrega
+    window.addEventListener('DOMContentLoaded', () => {
+        const inputData = document.getElementById('dataRelatorio');
+        if (inputData) {
+            const hoje = new Date();
+            const ano = hoje.getFullYear();
+            const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+            const dia = String(hoje.getDate()).padStart(2, '0');
+              inputData.value = ano + "-" + mes + "-" + dia;
+
+        }
+    });
 </script>
+
 </body>
 </html>
