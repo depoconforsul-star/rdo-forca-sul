@@ -493,6 +493,30 @@ function enviarGrupo() {
         }
     });
 }
+function toggleAdmin() {
+    const senha = prompt("Digite a senha do Administrator:");
+    if (senha === "2026") { 
+        const painel = document.getElementById('adminPanel');
+        if (painel) {
+            painel.classList.toggle('hidden'); 
+        }
+    } else { 
+        alert("Senha incorreta!"); 
+    }
+}
+
+function saveAdmin() {
+    const urlScript = document.getElementById('scriptUrl').value;
+    const linkWhats = document.getElementById('whatsappLink').value;
+    localStorage.setItem('scriptUrl', urlScript);
+    localStorage.setItem('whatsappLink', linkWhats);
+    alert("Configurações salvas!");
+    document.getElementById('adminPanel').classList.add('hidden');
+    if (typeof carregarDadosPlanilha === "function") {
+        carregarDadosPlanilha();
+    }
+}
+
 </script>
 </body>
 </html>
