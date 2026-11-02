@@ -443,7 +443,28 @@ function enviarGrupo() {
                 body: JSON.stringify(dados)
             })
             .then(function() { 
-                botaoVerde.disabled = false; botaoVerde.innerHTML = textoOrig;
+                // Restaura o botão verde
+                botaoVerde.disabled = false; 
+                botaoVerde.innerHTML = textoOrig;
+                
+                // === NOVO: LIMPA O FORMULÁRIO PARA EVITAR DUPLICIDADE ===
+                form.reset(); 
+                
+                // Esconde a área de pré-visualização do texto
+                const preview = document.getElementById('previewArea');
+                if (preview) preview.style.display = "none";
+                
+                // Recarrega a data de hoje no calendário limpo
+                const inputData = document.getElementById('dataRelatorio');
+                if (inputData) {
+                    const hoje = new Date();
+                    const ano = hoje.getFullYear();
+                    const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+                    const dia = String(hoje.getDate()).padStart(2, '0');
+                    inputData.value = ano + "-" + mes + "-" + dia;
+                }
+                
+                // Abre o WhatsApp por último
                 window.open(linkWhatsapp, '_blank');
             })
             .catch(function(err) { 
@@ -457,6 +478,7 @@ function enviarGrupo() {
         }
     });
 }
+
 
 function toggleAdmin() {
     const senha = prompt("Digite a senha do Administrator:");
