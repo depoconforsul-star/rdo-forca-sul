@@ -101,8 +101,7 @@
             <h1>RDO - Consórcio Força Sul</h1>
             <p>Relatório Diário de Obra - Controle Operacional</p>
         </div>
-    </div>
-    <div id="adminPanel" class="card admin-panel hidden">
+    <div id="adminPanel" class="card admin-panel">
         <h3>Configurações do Administrador</h3>
         <label>URL do App da Web (Google Script):</label>
         <input type="text" id="scriptUrl" placeholder="Link da implantação /exec" style="margin-bottom: 10px;">
@@ -468,25 +467,26 @@
         else { alert("Senha incorreta!"); }
     }
 
-    function saveAdmin() { 
-                localStorage.setItem('whatsappLink', document.getElementById('whatsappLink').value);
-        alert("Configurações salvas!");
-        document.getElementById('adminPanel').classList.add('hidden');
-        carregarDadosPlanilha();
+   function saveAdmin() {
+    localStorage.setItem('scriptUrl', document.getElementById('scriptUrl').value);
+    localStorage.setItem('whatsappLink', document.getElementById('whatsappLink').value);
+    alert("Configurações salvas!");
+    document.getElementById('adminPanel').classList.add('hidden');
+    carregarDadosPlanilha();
+} // <-- ESSA CHAVE FECHA CORRETAMENTE O SAVEADMIN
+
+// Define o dia atual de forma automática no campo de calendário assim que a página carrega
+window.addEventListener('DOMContentLoaded', () => {
+    const inputData = document.getElementById('dataRelatorio');
+    if (inputData) {
+        const hoje = new Date();
+        const ano = hoje.getFullYear();
+        const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+        const dia = String(hoje.getDate()).padStart(2, '0');
+        inputData.value = ano + "-" + mes + "-" + dia;
     }
-
-    // Define o dia atual de forma automática no campo de calendário assim que a página carrega
-    window.addEventListener('DOMContentLoaded', () => {
-        const inputData = document.getElementById('dataRelatorio');
-        if (inputData) {
-            const hoje = new Date();
-            const ano = hoje.getFullYear();
-            const mes = String(hoje.getMonth() + 1).padStart(2, '0');
-            const dia = String(hoje.getDate()).padStart(2, '0');
-              inputData.value = ano + "-" + mes + "-" + dia;
-
-        }
-    });
+});
+    
 </script>
 
 </body>
