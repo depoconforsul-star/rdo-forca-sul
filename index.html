@@ -101,7 +101,9 @@
             <h1>RDO - Consórcio Força Sul</h1>
             <p>Relatório Diário de Obra - Controle Operacional</p>
         </div>
-    <div id="adminPanel" class="card admin-panel">
+    </div> <!-- FECHAMENTO CORRETO DO CABEÇALHO -->
+
+    <div id="adminPanel" class="card admin-panel hidden">
         <h3>Configurações do Administrador</h3>
         <label>URL do App da Web (Google Script):</label>
         <input type="text" id="scriptUrl" placeholder="Link da implantação /exec" style="margin-bottom: 10px;">
@@ -109,7 +111,8 @@
         <input type="text" id="whatsappLink" value="https://whatsapp.com" style="margin-bottom: 10px;">
         <button onclick="saveAdmin()" style="padding: 8px 15px; background: var(--logo-blue); color: white; border: none; border-radius: 4px; cursor: pointer;">Salvar</button>
     </div>
-       <form id="rdoForm" onsubmit="event.preventDefault();">
+
+    <form id="rdoForm" onsubmit="event.preventDefault();">
         <div class="card border-blue">
             <h3>Data do Relatório <span>*</span></h3>
             <div class="tip-box">💡 Selecione a data de execução das atividades descritas.</div>
@@ -142,7 +145,6 @@
                 <option value="">Escolher</option>
             </select>
         </div>
-
         <div class="card border-blue">
             <h3>Subárea <span>*</span></h3>
             <div class="tip-box">💡 Especifique o local exato ou subsetor da atividade dentro da Usina.</div>
@@ -198,7 +200,6 @@
         <div class="card border-orange">
             <h3>Fotos da Atividade <span>*</span></h3>
             <div class="tip-box">💡 Faça o upload dos registros fotográficos obrigatórios (Selecione até 10 fotos).</div>
-            <!-- O atributo 'multiple' permite selecionar mais de um arquivo de imagem -->
             <input type="file" id="fotos" required multiple accept="image/*">
         </div>
 
@@ -294,13 +295,12 @@
             });
         }
     }
-
-  function obterDados(callback) {
+function obterDados(callback) {
     let colabs = [];
     document.querySelectorAll('input[name="colab"]:checked').forEach(function(cb) { colabs.push(cb.value); });
 
     let dados = {
-        dataRelatorio: document.getElementById('dataRelatorio').value, // ADICIONE ESTA LINHA EXATAMENTE AQUI
+        dataRelatorio: document.getElementById('dataRelatorio').value,
         disciplina: document.getElementById('disciplina').value,
         lider: document.getElementById('lider').value,
         usina: document.getElementById('usina').value,
@@ -345,7 +345,6 @@
                 let img = new Image();
                 img.src = reader.result;
                 img.onload = function() {
-                    // Configuração da compressão: Define a largura máxima ideal
                     let maxLargura = 1280; 
                     let larguraOrig = img.width;
                     let alturaOrig = img.height;
@@ -355,20 +354,18 @@
                         larguraOrig = maxLargura;
                     }
                     
-                    // Desenha a imagem reduzida em um canvas invisível
                     let canvas = document.createElement('canvas');
                     canvas.width = larguraOrig;
                     canvas.height = alturaOrig;
                     let ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, larguraOrig, alturaOrig);
                     
-                    // Converte o canvas de volta para base64 comprimindo a qualidade para 70%
                     let base64Comprimido = canvas.toDataURL('image/jpeg', 0.7);
-                    let fragmentos = base64Comprimido.split(',');
+                    let fragmentos = base64Comprimido.split(',')[1]; // Captura a string base64 pura de forma correta
                     
                     resolve({
                         base64: fragmentos, 
-                        nome: arquivo.name.replace(/\.[^/.]+$/, "") + ".jpg", // Força extensão leve .jpg
+                        nome: arquivo.name.replace(/\.[^/.]+$/, "") + ".jpg",
                         tipo: 'image/jpeg'
                     });
                 };
@@ -384,90 +381,94 @@
     });
 }
 
-        let msgPronta = " *RDO - CONSÓRCIO FORÇA SUL*\n\n";
+function gerarTextoRDO(d) {
+    let msgPronta = " *RDO - CONSÓRCIO FORÇA SUL*\n\n";
     if (d.dataRelatorio) {
         const [ano, mes, dia] = d.dataRelatorio.split('-');
         msgPronta += `📅 *Data do Relatório:* ${dia}/${mes}/${ano}\n`;
     }
-        msgPronta += `⚙️ *Disciplina:* ${d.disciplina}\n`;
-        msgPronta += `👤 *Líder:* ${d.lider}\n`;
-        msgPronta += `🏢 *Usina:* ${d.usina} | *Subárea:* ${d.subarea}\n`;
-        msgPronta += `🕵️‍♂️ *Fiscal:* ${d.fiscal}\n\n`;
-        msgPronta += `👥 *Equipe:* ${d.colaboradores || 'Nenhuma'}\n\n`;
-        msgPronta += `📊 *Tipo:* ${d.hhProducao} | 🚜 *Equipamento:* ${d.equipamento}\n`;
-        msgPronta += `📝 *Atividade:* ${d.atividade}\n`;
-        msgPronta += `⚠️ *Desvios:* ${d.desvios}\n`;
-        msgPronta += `🛑 *Impactos M.O:* ${d.impactos}\n\n`;
-        msgPronta += `📌 *Status:* ${d.statusAtividade}\n`;
-        msgPronta += `📦 *Materiais Pendentes:* ${d.materialsPendentes}\n`;
-        msgPronta += `🔍 *Obs:* ${d.observacoes}\n\n`;
+    msgPronta += `⚙️ *Disciplina:* ${d.disciplina}\n`;
+    msgPronta += `👤 *Líder:* ${d.lider}\n`;
+    msgPronta += `🏢 *Usina:* ${d.usina} | *Subárea:* ${d.subarea}\n`;
+    msgPronta += `🕵️‍♂️ *Fiscal:* ${d.fiscal}\n\n`;
+    msgPronta += `👥 *Equipe:* ${d.colaboradores || 'Nenhuma'}\n\n`;
+    msgPronta += `📊 *Tipo:* ${d.hhProducao} | 🚜 *Equipamento:* ${d.equipamento}\n`;
+    msgPronta += `📝 *Atividade:* ${d.atividade}\n`;
+    msgPronta += `⚠️ *Desvios:* ${d.desvios}\n`;
+    msgPronta += `🛑 *Impactos M.O:* ${d.impactos}\n\n`;
+    msgPronta += `📌 *Status:* ${d.statusAtividade}\n`;
+    msgPronta += `📦 *Materiais Pendentes:* ${d.materialsPendentes}\n`;
+    msgPronta += `🔍 *Obs:* ${d.observacoes}\n\n`;
 
-        const preview = document.getElementById('previewArea');
-        if (preview) {
-            preview.innerText = msgPronta;
-            preview.style.display = "block";
-        }
-        navigator.clipboard.writeText(msgPronta);
+    const preview = document.getElementById('previewArea');
+    if (preview) {
+        preview.innerText = msgPronta;
+        preview.style.display = "block";
     }
+    navigator.clipboard.writeText(msgPronta);
+}
 
-    function forçarMensagemManual() {
-        const form = document.getElementById('rdoForm');
-        if(!form.checkValidity()) { alert("Preencha os campos obrigatórios!"); form.reportValidity(); return; }
-        obterDados(function(dados) {
-            gerarTextoRDO(dados);
-            alert("Mensagem estruturada e copiada!");
-        });
-    }
+function forçarMensagemManual() {
+    const form = document.getElementById('rdoForm');
+    if(!form.checkValidity()) { alert("Preencha os campos obrigatórios!"); form.reportValidity(); return; }
+    obterDados(function(dados) {
+        gerarTextoRDO(dados);
+        alert("Mensagem estruturada e copiada!");
+    });
+}
 
-    function enviarGrupo() {
-        const form = document.getElementById('rdoForm');
-        if(!form.checkValidity()) { alert("Preencha todos os campos obrigatórios!"); form.reportValidity(); return; }
+function enviarGrupo() {
+    const form = document.getElementById('rdoForm');
+    if(!form.checkValidity()) { alert("Preencha todos os campos obrigatórios!"); form.reportValidity(); return; }
 
-        const botaoVerde = document.querySelector('.btn-green');
-        botaoVerde.disabled = true;
-        const textoOrig = botaoVerde.innerHTML;
-        botaoVerde.innerHTML = "⏳ Enviando Dados e Fotos...";
+    const botaoVerde = document.querySelector('.btn-green');
+    botaoVerde.disabled = true;
+    const textoOrig = botaoVerde.innerHTML;
+    botaoVerde.innerHTML = "⏳ Enviando Dados e Fotos...";
 
-        const urlPlanilha = document.getElementById('scriptUrl').value;
-        const linkWhatsapp = document.getElementById('whatsappLink').value || "https://whatsapp.com";
+    const urlPlanilha = document.getElementById('scriptUrl').value;
+    const linkWhatsapp = document.getElementById('whatsappLink').value || "https://whatsapp.com";
 
-        obterDados(function(dados) {
-            if (!dados) return; 
-            
-            gerarTextoRDO(dados);
-            
-            alert("Formulário RDO enviado com sucesso!\n\nO relatório foi copiado. Clique em OK para salvar na planilha e ir ao WhatsApp.");
+    obterDados(function(dados) {
+        if (!dados) return; 
+        
+        gerarTextoRDO(dados);
+        
+        alert("Formulário RDO enviado com sucesso!\n\nO relatório foi copiado. Clique em OK para salvar na planilha e ir ao WhatsApp.");
 
-            if(urlPlanilha) {
-                // Modificado para text/plain para transpassar restrições de payload grande no Google Script
-                fetch(urlPlanilha, {
-                    method: "POST",
-                    headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify(dados)
-                })
-                .then(function() { 
-                    botaoVerde.disabled = false; botaoVerde.innerHTML = textoOrig;
-                    window.open(linkWhatsapp, '_blank');
-                })
-                .catch(function(err) { 
-                    console.error("Erro na transmissão do pacote:", err);
-                    botaoVerde.disabled = false; botaoVerde.innerHTML = textoOrig;
-                    window.open(linkWhatsapp, '_blank');
-                });
-            } else {
+        if(urlPlanilha) {
+            fetch(urlPlanilha, {
+                method: "POST",
+                headers: { "Content-Type": "text/plain;charset=utf-8" },
+                body: JSON.stringify(dados)
+            })
+            .then(function() { 
                 botaoVerde.disabled = false; botaoVerde.innerHTML = textoOrig;
                 window.open(linkWhatsapp, '_blank');
-            }
-        });
-    }
+            })
+            .catch(function(err) { 
+                console.error("Erro na transmissão do pacote:", err);
+                botaoVerde.disabled = false; botaoVerde.innerHTML = textoOrig;
+                window.open(linkWhatsapp, '_blank');
+            });
+        } else {
+            botaoVerde.disabled = false; botaoVerde.innerHTML = textoOrig;
+            window.open(linkWhatsapp, '_blank');
+        }
+    });
+}
 
-    function toggleAdmin() {
-        const senha = prompt("Digite a senha do Administrator:");
-        if (senha === "2026") { document.getElementById('adminPanel').classList.toggle('hidden'); }
-        else { alert("Senha incorreta!"); }
+function toggleAdmin() {
+    const senha = prompt("Digite a senha do Administrator:");
+    if (senha === "2026") { 
+        const painel = document.getElementById('adminPanel');
+        if (painel) painel.classList.toggle('hidden'); 
+    } else { 
+        alert("Senha incorreta!"); 
     }
+}
 
-  function saveAdmin() {
+function saveAdmin() {
     const urlScript = document.getElementById('scriptUrl').value;
     const linkWhats = document.getElementById('whatsappLink').value;
     localStorage.setItem('scriptUrl', urlScript);
@@ -476,13 +477,6 @@
     document.getElementById('adminPanel').classList.add('hidden');
     if (typeof carregarDadosPlanilha === "function") {
         carregarDadosPlanilha();
-    }
-}
-
-function toggleAdmin() {
-    const painel = document.getElementById('adminPanel');
-    if (painel) {
-        painel.classList.toggle('hidden');
     }
 }
 
@@ -500,4 +494,3 @@ window.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
-
