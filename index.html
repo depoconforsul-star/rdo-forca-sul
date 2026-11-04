@@ -160,7 +160,16 @@
                 <option value="">Escolher</option>
             </select>
         </div>
+        
+        <div class="card border-blue">
+            <h3>Projeto <span>*</span></h3>
+            <div class="tip-box">💡 Selecione o projeto ou contrato correspondente a esta atividade.</div>
+            <select id="projeto" required>
+                <option value="">Escolher</option>
+            </select>
+        </div>
 
+        
         <div class="card border-blue">
             <h3>Colaboradores <span>*</span></h3>
             <div class="tip-box">💡 Selecione todos os profissionais envolvidos nesta frente operacional.</div>
@@ -273,6 +282,7 @@
             preencherDropdown('usina', dados.usinas);
             preencherDropdown('subarea', dados.subareas);
             preencherDropdown('fiscal', dados.fiscais);
+            preencherDropdown('projeto', dados.projetos);
 
             const containerColab = document.getElementById('container-colaboradores');
             containerColab.innerHTML = "";
@@ -313,6 +323,7 @@ function obterDados(callback) {
         usina: document.getElementById('usina').value,
         subarea: document.getElementById('subarea').value,
         fiscal: document.getElementById('fiscal').value,
+        projeto: document.getElementById('projeto').value,
         colaboradores: colabs.join(', '),
         hhProducao: document.getElementById('hhProducao').value,
         equipamento: document.getElementById('equipamento').value,
@@ -398,6 +409,7 @@ function gerarTextoRDO(d) {
     msgPronta += `👤 *Líder:* ${d.lider}\n`;
     msgPronta += `🏢 *Usina:* ${d.usina} | *Subárea:* ${d.subarea}\n`;
     msgPronta += `🕵️‍♂️ *Fiscal:* ${d.fiscal}\n\n`;
+    msgPronta += `📁 *Projeto:* ${d.projeto}\n`;
     msgPronta += `👥 *Equipe:* ${d.colaboradores || 'Nenhuma'}\n\n`;
     msgPronta += `📊 *Tipo:* ${d.hhProducao} | 🚜 *Equipamento:* ${d.equipamento}\n`;
     msgPronta += `📝 *Atividade:* ${d.atividade}\n`;
