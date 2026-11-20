@@ -74,8 +74,8 @@
         }
         .border-orange .tip-box { background-color: #fff3e6; border-left-color: var(--logo-orange); color: #994d00; }
         .border-green .tip-box { background-color: #e6f7ed; border-left-color: var(--logo-green); color: #006633; }
-        select, input[type="text"], textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 4px; box-sizing: border-box; font-size: 14px; background-color: #fafafa; }
-        select:focus, input[type="text"]:focus, textarea:focus { border-color: var(--logo-blue); outline: none; background-color: #fff; }
+        select, input[type="text"], input[type="date"], textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 4px; box-sizing: border-box; font-size: 14px; background-color: #fafafa; }
+        select:focus, input[type="text"]:focus, input[type="date"]:focus, textarea:focus { border-color: var(--logo-blue); outline: none; background-color: #fff; }
         .checkbox-group { max-height: 200px; overflow-y: auto; border: 1px solid var(--border); padding: 10px; border-radius: 4px; background: #fafafa; }
         .checkbox-item { display: flex; align-items: center; margin-bottom: 8px; }
         .checkbox-item input { margin-right: 10px; }
@@ -101,7 +101,7 @@
             <h1>RDO - Consórcio Força Sul</h1>
             <p>Relatório Diário de Obra - Controle Operacional</p>
         </div>
-    </div> <!-- FECHAMENTO CORRETO DO CABEÇALHO -->
+    </div>
 
     <div id="adminPanel" class="card admin-panel hidden">
         <h3>Configurações do Administrador</h3>
@@ -115,8 +115,8 @@
     <form id="rdoForm" onsubmit="event.preventDefault();">
         <div class="card border-blue">
             <h3>Data do Relatório <span>*</span></h3>
-            <div class="tip-box">💡 Selecione a data de execução das atividades descritas.</div>
-            <input type="date" id="dataRelatorio" required>
+            <div class="tip-box">💡 Selecione a data de execução. Os colaboradores já escalados neste dia sairão da lista automaticamente.</div>
+            <input type="date" id="dataRelatorio" onchange="renderizarColaboradoresDisponiveis()" required>
         </div>
 
         <div class="card border-blue">
@@ -145,6 +145,7 @@
                 <option value="">Escolher</option>
             </select>
         </div>
+
         <div class="card border-blue">
             <h3>Subárea <span>*</span></h3>
             <div class="tip-box">💡 Especifique o local exato ou subsetor da atividade dentro da Usina.</div>
@@ -169,12 +170,11 @@
             </select>
         </div>
 
-        
         <div class="card border-blue">
             <h3>Colaboradores <span>*</span></h3>
-            <div class="tip-box">💡 Selecione todos os profissionais envolvidos nesta frente operacional.</div>
+            <div class="tip-box">💡 Selecione todos os profissionais disponíveis para esta data.</div>
             <div class="checkbox-group" id="container-colaboradores">
-                <!-- Injetado dinamicamente via planilha -->
+                <div style="color:#666;font-size:12px;">Selecione a data do relatório primeiro...</div>
             </div>
         </div>
 
@@ -252,9 +252,10 @@
 </div>
 <script>
     let msgPronta = "";
+    let listaTodosColaboradores = [];
+    let ocupadosPorData = {}; // Formato esperado: { "2026-11-20": ["João", "Maria"] }
 
-       window.onload = function() {
-        // === NOVO: Lê a URL da planilha direto do link se ela for enviada ===
+    window.onload = function() {
         const urlParams = new URLSearchParams(window.location.search);
         const urlDoLink = urlParams.get('url');
         if (urlDoLink) {
@@ -267,9 +268,22 @@
         if(localStorage.getItem('whatsappLink')) {
             document.getElementById('whatsappLink').value = localStorage.getItem('whatsappLink');
         }
-        
+
+        // Define a data de hoje por padrão
+        definirDataHoje();
         carregarDadosPlanilha();
     };
+
+    function definirDataHoje() {
+        const inputData = document.getElementById('dataRelatorio');
+        if (inputData && !inputData.value) {
+            const hoje = new Date();
+            const ano = hoje.getFullYear();
+            const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+            const dia = String(hoje.getDate()).padStart(2, '0');
+            inputData.value = `${ano}-${mes}-${dia}`;
+        }
+    }
 
     function carregarDadosPlanilha() {
         const urlPlanilha = document.getElementById('scriptUrl').value;
@@ -284,21 +298,43 @@
             preencherDropdown('fiscal', dados.fiscais);
             preencherDropdown('projeto', dados.projetos);
 
-            const containerColab = document.getElementById('container-colaboradores');
-            containerColab.innerHTML = "";
-            
-            if (dados.colaboradores && dados.colaboradores.length > 0) {
-                dados.colaboradores.forEach(nome => {
-                    const item = document.createElement('div');
-                    item.className = 'checkbox-item';
-                    item.innerHTML = `<input type="checkbox" name="colab" value="${nome}"> ${nome}`;
-                    containerColab.appendChild(item);
-                });
-            } else {
-                containerColab.innerHTML = "<div style='color:red;font-size:12px;'>Nenhum colaborador encontrado.</div>";
-            }
+            listaTodosColaboradores = dados.colaboradores || [];
+            ocupadosPorData = dados.ocupadosPorData || {};
+
+            renderizarColaboradoresDisponiveis();
         })
         .catch(err => console.error("Erro ao carregar banco de dados: " + err));
+    }
+
+    function renderizarColaboradoresDisponiveis() {
+        const containerColab = document.getElementById('container-colaboradores');
+        const dataSelecionada = document.getElementById('dataRelatorio').value;
+        containerColab.innerHTML = "";
+
+        if (!dataSelecionada) {
+            containerColab.innerHTML = "<div style='color:#666;font-size:12px;'>Selecione uma data acima para ver os colaboradores disponíveis.</div>";
+            return;
+        }
+
+        if (listaTodosColaboradores.length === 0) {
+            containerColab.innerHTML = "<div style='color:red;font-size:12px;'>Nenhum colaborador carregado da planilha.</div>";
+            return;
+        }
+
+        const ocupadosHoje = (ocupadosPorData[dataSelecionada] || []).map(n => n.trim().toLowerCase());
+        const disponiveis = listaTodosColaboradores.filter(nome => !ocupadosHoje.includes(nome.trim().toLowerCase()));
+
+        if (disponiveis.length === 0) {
+            containerColab.innerHTML = "<div style='color:red;font-size:12px;'>Todos os colaboradores já foram escalados nesta data!</div>";
+            return;
+        }
+
+        disponiveis.forEach(nome => {
+            const item = document.createElement('div');
+            item.className = 'checkbox-item';
+            item.innerHTML = `<label style="display:flex;align-items:center;cursor:pointer;width:100%;"><input type="checkbox" name="colab" value="${nome}"> ${nome}</label>`;
+            containerColab.appendChild(item);
+        });
     }
 
     function preencherDropdown(id, lista) {
@@ -312,230 +348,219 @@
             });
         }
     }
-function obterDados(callback) {
-    let colabs = [];
-    document.querySelectorAll('input[name="colab"]:checked').forEach(function(cb) { colabs.push(cb.value); });
+    function obterDados(callback) {
+        let colabs = [];
+        document.querySelectorAll('input[name="colab"]:checked').forEach(function(cb) { colabs.push(cb.value); });
 
-    let dados = {
-        dataRelatorio: document.getElementById('dataRelatorio').value,
-        disciplina: document.getElementById('disciplina').value,
-        lider: document.getElementById('lider').value,
-        usina: document.getElementById('usina').value,
-        subarea: document.getElementById('subarea').value,
-        fiscal: document.getElementById('fiscal').value,
-        projeto: document.getElementById('projeto').value,
-        colaboradores: colabs.join(', '),
-        hhProducao: document.getElementById('hhProducao').value,
-        equipamento: document.getElementById('equipamento').value,
-        atividade: document.getElementById('atividade').value,
-        desvios: document.getElementById('desvios').value,
-        impactos: document.getElementById('impactos').value,
-        statusAtividade: document.getElementById('statusAtividade').value,
-        materialsPendentes: document.getElementById('materiaisPendentes').value || "Nenhum",
-        observacoes: document.getElementById('observacoes').value || "Nenhuma",
-        fotos: [] 
-    };
+        if (colabs.length === 0) {
+            alert("⚠️ Selecione pelo menos 1 colaborador disponível!");
+            return;
+        }
 
-    const fotoInput = document.getElementById('fotos');
-    const arquivos = fotoInput ? fotoInput.files : [];
+        let dados = {
+            dataRelatorio: document.getElementById('dataRelatorio').value,
+            disciplina: document.getElementById('disciplina').value,
+            lider: document.getElementById('lider').value,
+            usina: document.getElementById('usina').value,
+            subarea: document.getElementById('subarea').value,
+            fiscal: document.getElementById('fiscal').value,
+            projeto: document.getElementById('projeto').value,
+            colaboradores: colabs.join(', '),
+            colaboradoresArray: colabs,
+            hhProducao: document.getElementById('hhProducao').value,
+            equipamento: document.getElementById('equipamento').value,
+            atividade: document.getElementById('atividade').value,
+            desvios: document.getElementById('desvios').value,
+            impactos: document.getElementById('impactos').value,
+            statusAtividade: document.getElementById('statusAtividade').value,
+            materialsPendentes: document.getElementById('materiaisPendentes').value || "Nenhum",
+            observacoes: document.getElementById('observacoes').value || "Nenhuma",
+            fotos: [] 
+        };
 
-    if (arquivos.length > 10) {
-        alert("⚠️ Limite Máximo Excedido: Você só pode selecionar no máximo 10 fotos!");
+        const fotoInput = document.getElementById('fotos');
+        const arquivos = fotoInput ? fotoInput.files : [];
+
+        if (arquivos.length > 10) {
+            alert("⚠️ Limite Máximo Excedido: Você só pode selecionar no máximo 10 fotos!");
+            resetarBotaoVerde();
+            return;
+        }
+
+        if (arquivos.length === 0) {
+            callback(dados);
+            return;
+        }
+
+        let promessas = [];
+        for (let i = 0; i < arquivos.length; i++) {
+            let arquivo = arquivos[i];
+            let processarEComprimir = new Promise((resolve) => {
+                let reader = new FileReader();
+                reader.onloadend = function() {
+                    let img = new Image();
+                    img.src = reader.result;
+                    img.onload = function() {
+                        let maxLargura = 1280; 
+                        let larguraOrig = img.width;
+                        let alturaOrig = img.height;
+                        
+                        if (larguraOrig > maxLargura) {
+                            alturaOrig = Math.round((maxLargura * alturaOrig) / larguraOrig);
+                            larguraOrig = maxLargura;
+                        }
+                        
+                        let canvas = document.createElement('canvas');
+                        canvas.width = larguraOrig;
+                        canvas.height = alturaOrig;
+                        let ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, larguraOrig, alturaOrig);
+                        
+                        let base64Comprimido = canvas.toDataURL('image/jpeg', 0.7);
+                        let fragmentos = base64Comprimido.split(',')[1];
+                        
+                        resolve({
+                            base64: fragmentos, 
+                            nome: arquivo.name.replace(/\.[^/.]+$/, "") + ".jpg",
+                            tipo: 'image/jpeg'
+                        });
+                    };
+                };
+                reader.readAsDataURL(arquivo);
+            });
+            promessas.push(processarEComprimir);
+        }
+
+        Promise.all(promessas).then(resultadoLote => {
+            dados.fotos = resultadoLote;
+            callback(dados);
+        });
+    }
+
+    function gerarTextoRDO(d) {
+        let msgPronta = " *RDO - CONSÓRCIO FORÇA SUL*\n\n";
+        if (d.dataRelatorio) {
+            const [ano, mes, dia] = d.dataRelatorio.split('-');
+            msgPronta += `📅 *Data do Relatório:* ${dia}/${mes}/${ano}\n`;
+        }
+        msgPronta += `⚙️ *Disciplina:* ${d.disciplina}\n`;
+        msgPronta += `👤 *Líder:* ${d.lider}\n`;
+        msgPronta += `🏢 *Usina:* ${d.usina} | *Subárea:* ${d.subarea}\n`;
+        msgPronta += `🕵️‍♂️ *Fiscal:* ${d.fiscal}\n\n`;
+        msgPronta += `📁 *Projeto:* ${d.projeto}\n`;
+        msgPronta += `👥 *Equipe:* ${d.colaboradores || 'Nenhuma'}\n\n`;
+        msgPronta += `📊 *Tipo:* ${d.hhProducao} | 🚜 *Equipamento:* ${d.equipamento}\n`;
+        msgPronta += `📝 *Atividade:* ${d.atividade}\n`;
+        msgPronta += `⚠️ *Desvios:* ${d.desvios}\n`;
+        msgPronta += `🛑 *Impactos M.O:* ${d.impactos}\n\n`;
+        msgPronta += `📌 *Status:* ${d.statusAtividade}\n`;
+        msgPronta += `📦 *Materiais Pendentes:* ${d.materialsPendentes}\n`;
+        msgPronta += `🔍 *Obs:* ${d.observacoes}\n\n`;
+
+        const preview = document.getElementById('previewArea');
+        if (preview) {
+            preview.innerText = msgPronta;
+            preview.style.display = "block";
+        }
+        navigator.clipboard.writeText(msgPronta);
+    }
+
+    function forçarMensagemManual() {
+        const form = document.getElementById('rdoForm');
+        if(!form.checkValidity()) { alert("Preencha os campos obrigatórios!"); form.reportValidity(); return; }
+        obterDados(function(dados) {
+            gerarTextoRDO(dados);
+            alert("Mensagem estruturada e copiada!");
+        });
+    }
+
+    function resetarBotaoVerde() {
         const botaoVerde = document.querySelector('.btn-green');
         if (botaoVerde) {
-            botaoVerde.disabled = false;
-            botaoVerde.innerHTML = "🟢 WhatsApp / Enviar";
-        }
-        return;
-    }
-
-    if (arquivos.length === 0) {
-        callback(dados);
-        return;
-    }
-
-    let promessas = [];
-    for (let i = 0; i < arquivos.length; i++) {
-        let arquivo = arquivos[i];
-        let processarEComprimir = new Promise((resolve) => {
-            let reader = new FileReader();
-            reader.onloadend = function() {
-                let img = new Image();
-                img.src = reader.result;
-                img.onload = function() {
-                    let maxLargura = 1280; 
-                    let larguraOrig = img.width;
-                    let alturaOrig = img.height;
-                    
-                    if (larguraOrig > maxLargura) {
-                        alturaOrig = Math.round((maxLargura * alturaOrig) / larguraOrig);
-                        larguraOrig = maxLargura;
-                    }
-                    
-                    let canvas = document.createElement('canvas');
-                    canvas.width = larguraOrig;
-                    canvas.height = alturaOrig;
-                    let ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, larguraOrig, alturaOrig);
-                    
-                    let base64Comprimido = canvas.toDataURL('image/jpeg', 0.7);
-                    let fragmentos = base64Comprimido.split(',')[1]; // Captura a string base64 pura de forma correta
-                    
-                    resolve({
-                        base64: fragmentos, 
-                        nome: arquivo.name.replace(/\.[^/.]+$/, "") + ".jpg",
-                        tipo: 'image/jpeg'
-                    });
-                };
-            };
-            reader.readAsDataURL(arquivo);
-        });
-        promessas.push(processarEComprimir);
-    }
-
-    Promise.all(promessas).then(resultadoLote => {
-        dados.fotos = resultadoLote;
-        callback(dados);
-    });
-}
-
-function gerarTextoRDO(d) {
-    let msgPronta = " *RDO - CONSÓRCIO FORÇA SUL*\n\n";
-    if (d.dataRelatorio) {
-        const [ano, mes, dia] = d.dataRelatorio.split('-');
-        msgPronta += `📅 *Data do Relatório:* ${dia}/${mes}/${ano}\n`;
-    }
-    msgPronta += `⚙️ *Disciplina:* ${d.disciplina}\n`;
-    msgPronta += `👤 *Líder:* ${d.lider}\n`;
-    msgPronta += `🏢 *Usina:* ${d.usina} | *Subárea:* ${d.subarea}\n`;
-    msgPronta += `🕵️‍♂️ *Fiscal:* ${d.fiscal}\n\n`;
-    msgPronta += `📁 *Projeto:* ${d.projeto}\n`;
-    msgPronta += `👥 *Equipe:* ${d.colaboradores || 'Nenhuma'}\n\n`;
-    msgPronta += `📊 *Tipo:* ${d.hhProducao} | 🚜 *Equipamento:* ${d.equipamento}\n`;
-    msgPronta += `📝 *Atividade:* ${d.atividade}\n`;
-    msgPronta += `⚠️ *Desvios:* ${d.desvios}\n`;
-    msgPronta += `🛑 *Impactos M.O:* ${d.impactos}\n\n`;
-    msgPronta += `📌 *Status:* ${d.statusAtividade}\n`;
-    msgPronta += `📦 *Materiais Pendentes:* ${d.materialsPendentes}\n`;
-    msgPronta += `🔍 *Obs:* ${d.observacoes}\n\n`;
-
-    const preview = document.getElementById('previewArea');
-    if (preview) {
-        preview.innerText = msgPronta;
-        preview.style.display = "block";
-    }
-    navigator.clipboard.writeText(msgPronta);
-}
-
-function forçarMensagemManual() {
-    const form = document.getElementById('rdoForm');
-    if(!form.checkValidity()) { alert("Preencha os campos obrigatórios!"); form.reportValidity(); return; }
-    obterDados(function(dados) {
-        gerarTextoRDO(dados);
-        alert("Mensagem estruturada e copiada!");
-    });
-}
-
-function enviarGrupo() {
-    const form = document.getElementById('rdoForm');
-    if(!form.checkValidity()) { alert("Preencha todos os campos obrigatórios!"); form.reportValidity(); return; }
-
-    const botaoVerde = document.querySelector('.btn-green');
-    
-    // TRAVA ABSOLUTA: Se já estiver enviando, ignora qualquer segundo clique
-    if (botaoVerde.disabled || botaoVerde.innerHTML.includes("⏳")) {
-        return;
-    }
-    
-    botaoVerde.disabled = true;
-    botaoVerde.style.opacity = "0.5";
-    botaoVerde.style.cursor = "not-allowed";
-    botaoVerde.innerHTML = "⏳ Enviando Dados e Fotos...";
-
-    const urlPlanilha = document.getElementById('scriptUrl').value;
-    const linkWhatsapp = document.getElementById('whatsappLink').value || "https://whatsapp.com";
-
-    obterDados(function(dados) {
-        if (!dados) {
             botaoVerde.disabled = false;
             botaoVerde.style.opacity = "1";
             botaoVerde.style.cursor = "pointer";
             botaoVerde.innerHTML = "🟢 WhatsApp / Enviar";
-            return; 
         }
-        
-        gerarTextoRDO(dados);
-        
-        alert("Formulário RDO enviado com sucesso!\n\nO relatório foi copiado. Clique em OK para salvar na planilha e ir ao WhatsApp.");
-
-        if(urlPlanilha) {
-            fetch(urlPlanilha, {
-                method: "POST",
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify(dados)
-            })
-            .then(function() { 
-                // Executa a limpeza forçada dos campos imediatamente após a resposta do servidor
-                form.reset(); 
-                
-                // Esconde a área de texto do WhatsApp antiga
-                const preview = document.getElementById('previewArea');
-                if (preview) preview.style.display = "none";
-                
-                // Restaura o calendário para a data atual
-                const inputData = document.getElementById('dataRelatorio');
-                if (inputData) {
-                    const hoje = new Date();
-                    const ano = hoje.getFullYear();
-                    const mes = String(hoje.getMonth() + 1).padStart(2, '0');
-                    const dia = String(hoje.getDate()).padStart(2, '0');
-                    inputData.value = ano + "-" + mes + "-" + dia;
-                }
-                
-                // Libera o botão novamente para o próximo registro
-                botaoVerde.disabled = false; 
-                botaoVerde.style.opacity = "1";
-                botaoVerde.style.cursor = "pointer";
-                botaoVerde.innerHTML = "🟢 WhatsApp / Enviar";
-                
-                // Abre o WhatsApp por último, após garantir a limpeza da tela
-                window.open(linkWhatsapp, '_blank');
-            })
-            .catch(function(err) { 
-                console.error("Erro na transmissão do pacote:", err);
-                botaoVerde.disabled = false; botaoVerde.style.opacity = "1"; botaoVerde.style.cursor = "pointer"; botaoVerde.innerHTML = "🟢 WhatsApp / Enviar";
-                window.open(linkWhatsapp, '_blank');
-            });
-        } else {
-            botaoVerde.disabled = false; botaoVerde.style.opacity = "1"; botaoVerde.style.cursor = "pointer"; botaoVerde.innerHTML = "🟢 WhatsApp / Enviar";
-            window.open(linkWhatsapp, '_blank');
-        }
-    });
-}
-function toggleAdmin() {
-    const senha = prompt("Digite a senha do Administrator:");
-    if (senha === "2026") { 
-        const painel = document.getElementById('adminPanel');
-        if (painel) {
-            painel.classList.toggle('hidden'); 
-        }
-    } else { 
-        alert("Senha incorreta!"); 
     }
-}
 
-function saveAdmin() {
-    const urlScript = document.getElementById('scriptUrl').value;
-    const linkWhats = document.getElementById('whatsappLink').value;
-    localStorage.setItem('scriptUrl', urlScript);
-    localStorage.setItem('whatsappLink', linkWhats);
-    alert("Configurações salvas!");
-    document.getElementById('adminPanel').classList.add('hidden');
-    if (typeof carregarDadosPlanilha === "function") {
+    function enviarGrupo() {
+        const form = document.getElementById('rdoForm');
+        if(!form.checkValidity()) { alert("Preencha todos os campos obrigatórios!"); form.reportValidity(); return; }
+
+        const botaoVerde = document.querySelector('.btn-green');
+        if (botaoVerde.disabled || botaoVerde.innerHTML.includes("⏳")) return;
+
+        const urlPlanilha = document.getElementById('scriptUrl').value;
+        const linkWhatsapp = document.getElementById('whatsappLink').value || "https://whatsapp.com";
+
+        obterDados(function(dados) {
+            if (!dados) return;
+
+            botaoVerde.disabled = true;
+            botaoVerde.style.opacity = "0.5";
+            botaoVerde.style.cursor = "not-allowed";
+            botaoVerde.innerHTML = "⏳ Enviando Dados e Fotos...";
+
+            gerarTextoRDO(dados);
+
+            // Bloqueia localmente na hora para a data enviada
+            if (!ocupadosPorData[dados.dataRelatorio]) {
+                ocupadosPorData[dados.dataRelatorio] = [];
+            }
+            ocupadosPorData[dados.dataRelatorio].push(...dados.colaboradoresArray);
+
+            alert("Formulário RDO enviado com sucesso!\n\nO relatório foi copiado. Clique em OK para salvar na planilha e ir ao WhatsApp.");
+
+            if(urlPlanilha) {
+                fetch(urlPlanilha, {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify(dados)
+                })
+                .then(function() { 
+                    form.reset(); 
+                    const preview = document.getElementById('previewArea');
+                    if (preview) preview.style.display = "none";
+                    
+                    definirDataHoje();
+                    renderizarColaboradoresDisponiveis(); // Atualiza a lista removendo quem acabou de ir
+                    resetarBotaoVerde();
+                    window.open(linkWhatsapp, '_blank');
+                })
+                .catch(function(err) { 
+                    console.error("Erro na transmissão do pacote:", err);
+                    renderizarColaboradoresDisponiveis();
+                    resetarBotaoVerde();
+                    window.open(linkWhatsapp, '_blank');
+                });
+            } else {
+                renderizarColaboradoresDisponiveis();
+                resetarBotaoVerde();
+                window.open(linkWhatsapp, '_blank');
+            }
+        });
+    }
+
+    function toggleAdmin() {
+        const senha = prompt("Digite a senha do Administrator:");
+        if (senha === "2026") { 
+            const painel = document.getElementById('adminPanel');
+            if (painel) painel.classList.toggle('hidden'); 
+        } else { 
+            alert("Senha incorreta!"); 
+        }
+    }
+
+    function saveAdmin() {
+        const urlScript = document.getElementById('scriptUrl').value;
+        const linkWhats = document.getElementById('whatsappLink').value;
+        localStorage.setItem('scriptUrl', urlScript);
+        localStorage.setItem('whatsappLink', linkWhats);
+        alert("Configurações salvas!");
+        document.getElementById('adminPanel').classList.add('hidden');
         carregarDadosPlanilha();
     }
-}
-
 </script>
 </body>
 </html>
