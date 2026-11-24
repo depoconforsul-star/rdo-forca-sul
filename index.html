@@ -76,6 +76,10 @@
         .border-green .tip-box { background-color: #e6f7ed; border-left-color: var(--logo-green); color: #006633; }
         select, input[type="text"], input[type="date"], textarea { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 4px; box-sizing: border-box; font-size: 14px; background-color: #fafafa; }
         select:focus, input[type="text"]:focus, input[type="date"]:focus, textarea:focus { border-color: var(--logo-blue); outline: none; background-color: #fff; }
+        .selected-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+        .chip { background-color: var(--logo-blue); color: white; padding: 5px 10px; border-radius: 16px; font-size: 12px; display: inline-flex; align-items: center; gap: 8px; }
+        .chip button { background: rgba(255, 255, 255, 0.25); border: none; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 12px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
+        .chip button:hover { background: #ff4d4d; }
         .checkbox-group { max-height: 200px; overflow-y: auto; border: 1px solid var(--border); padding: 10px; border-radius: 4px; background: #fafafa; }
         .checkbox-item { display: flex; align-items: center; margin-bottom: 8px; }
         .checkbox-item input { margin-right: 10px; }
@@ -137,7 +141,6 @@
                 <option value="">Escolher</option>
             </select>
         </div>
-
         <div class="card border-blue">
             <h3>Usina <span>*</span></h3>
             <div class="tip-box">💡 Marque a unidade fabril/operacional onde a frente está alocada.</div>
@@ -173,6 +176,7 @@
         <div class="card border-blue">
             <h3>Colaboradores <span>*</span></h3>
             <div class="tip-box">💡 Selecione todos os profissionais disponíveis para esta data.</div>
+            <div id="colaboradores-selecionados" class="selected-chips"></div>
             <div class="checkbox-group" id="container-colaboradores">
                 <div style="color:#666;font-size:12px;">Selecione a data do relatório primeiro...</div>
             </div>
@@ -305,11 +309,13 @@
         })
         .catch(err => console.error("Erro ao carregar banco de dados: " + err));
     }
-
     function renderizarColaboradoresDisponiveis() {
         const containerColab = document.getElementById('container-colaboradores');
+        const containerChips = document.getElementById('colaboradores-selecionados');
         const dataSelecionada = document.getElementById('dataRelatorio').value;
+        
         containerColab.innerHTML = "";
+        if (containerChips) containerChips.innerHTML = "";
 
         if (!dataSelecionada) {
             containerColab.innerHTML = "<div style='color:#666;font-size:12px;'>Selecione uma data acima para ver os colaboradores disponíveis.</div>";
@@ -332,9 +338,31 @@
         disponiveis.forEach(nome => {
             const item = document.createElement('div');
             item.className = 'checkbox-item';
-            item.innerHTML = `<label style="display:flex;align-items:center;cursor:pointer;width:100%;"><input type="checkbox" name="colab" value="${nome}"> ${nome}</label>`;
+            item.innerHTML = `<label style="display:flex;align-items:center;cursor:pointer;width:100%;"><input type="checkbox" name="colab" value="${nome}" onchange="atualizarChipsColaboradores()"> ${nome}</label>`;
             containerColab.appendChild(item);
         });
+    }
+
+    function atualizarChipsColaboradores() {
+        const containerChips = document.getElementById('colaboradores-selecionados');
+        if (!containerChips) return;
+        containerChips.innerHTML = "";
+
+        document.querySelectorAll('input[name="colab"]:checked').forEach(cb => {
+            const chip = document.createElement('div');
+            chip.className = 'chip';
+            chip.innerHTML = `<span>${cb.value}</span><button type="button" title="Remover" onclick="removerColaborador('${cb.value.replace(/'/g, "\\'")}')">×</button>`;
+            containerChips.appendChild(chip);
+        });
+    }
+
+    function removerColaborador(nome) {
+        document.querySelectorAll('input[name="colab"]').forEach(cb => {
+            if (cb.value === nome) {
+                cb.checked = false;
+            }
+        });
+        atualizarChipsColaboradores();
     }
 
     function preencherDropdown(id, lista) {
@@ -409,7 +437,6 @@
                             alturaOrig = Math.round((maxLargura * alturaOrig) / larguraOrig);
                             larguraOrig = maxLargura;
                         }
-                        
                         let canvas = document.createElement('canvas');
                         canvas.width = larguraOrig;
                         canvas.height = alturaOrig;
@@ -520,6 +547,8 @@
                 })
                 .then(function() { 
                     form.reset(); 
+                    const containerChips = document.getElementById('colaboradores-selecionados');
+                    if (containerChips) containerChips.innerHTML = "";
                     const preview = document.getElementById('previewArea');
                     if (preview) preview.style.display = "none";
                     
@@ -535,6 +564,8 @@
                     window.open(linkWhatsapp, '_blank');
                 });
             } else {
+                const containerChips = document.getElementById('colaboradores-selecionados');
+                if (containerChips) containerChips.innerHTML = "";
                 renderizarColaboradoresDisponiveis();
                 resetarBotaoVerde();
                 window.open(linkWhatsapp, '_blank');
