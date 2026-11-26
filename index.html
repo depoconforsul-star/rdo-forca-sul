@@ -511,7 +511,7 @@
         }
     }
 
-    function enviarGrupo() {
+        function enviarGrupo() {
         const form = document.getElementById('rdoForm');
         if(!form.checkValidity()) { alert("Preencha todos os campos obrigatórios!"); form.reportValidity(); return; }
 
@@ -521,13 +521,17 @@
         const urlPlanilha = document.getElementById('scriptUrl').value;
         const linkWhatsapp = document.getElementById('whatsappLink').value || "https://whatsapp.com";
 
-        obterDados(function(dados) {
-            if (!dados) return;
+        // 1. Ativa a ampulheta imediatamente ao clicar
+        botaoVerde.disabled = true;
+        botaoVerde.style.opacity = "0.5";
+        botaoVerde.style.cursor = "not-allowed";
+        botaoVerde.innerHTML = "⏳ Enviando Dados e Fotos...";
 
-            botaoVerde.disabled = true;
-            botaoVerde.style.opacity = "0.5";
-            botaoVerde.style.cursor = "not-allowed";
-            botaoVerde.innerHTML = "⏳ Enviando Dados e Fotos...";
+        obterDados(function(dados) {
+            if (!dados) {
+                resetarBotaoVerde();
+                return;
+            }
 
             gerarTextoRDO(dados);
 
@@ -537,8 +541,24 @@
             }
             ocupadosPorData[dados.dataRelatorio].push(...dados.colaboradoresArray);
 
-            alert("Formulário RDO enviado com sucesso!\n\nO relatório foi copiado. Clique em OK para salvar na planilha e ir ao WhatsApp.");
+            const finalizarELimpar = function() {
+                // 3. Mostra o aviso SOMENTE após terminar de carregar/salvar
+                alert("Formulário RDO enviado com sucesso!\n\nO relatório foi copiado. Clique em OK para ir ao WhatsApp.");
+                
+                // 4. Faz o reboot limpando a página logo após clicar em OK
+                form.reset(); 
+                const containerChips = document.getElementById('colaboradores-selecionados');
+                if (containerChips) containerChips.innerHTML = "";
+                const preview = document.getElementById('previewArea');
+                if (preview) preview.style.display = "none";
+                
+                definirDataHoje();
+                renderizarColaboradoresDisponiveis();
+                resetarBotaoVerde();
+                window.open(linkWhatsapp, '_blank');
+            };
 
+            // 2. Envia os dados e fotos para a planilha enquanto a ampulheta gira
             if(urlPlanilha) {
                 fetch(urlPlanilha, {
                     method: "POST",
@@ -546,29 +566,14 @@
                     body: JSON.stringify(dados)
                 })
                 .then(function() { 
-                    form.reset(); 
-                    const containerChips = document.getElementById('colaboradores-selecionados');
-                    if (containerChips) containerChips.innerHTML = "";
-                    const preview = document.getElementById('previewArea');
-                    if (preview) preview.style.display = "none";
-                    
-                    definirDataHoje();
-                    renderizarColaboradoresDisponiveis(); // Atualiza a lista removendo quem acabou de ir
-                    resetarBotaoVerde();
-                    window.open(linkWhatsapp, '_blank');
+                    finalizarELimpar();
                 })
                 .catch(function(err) { 
                     console.error("Erro na transmissão do pacote:", err);
-                    renderizarColaboradoresDisponiveis();
-                    resetarBotaoVerde();
-                    window.open(linkWhatsapp, '_blank');
+                    finalizarELimpar();
                 });
             } else {
-                const containerChips = document.getElementById('colaboradores-selecionados');
-                if (containerChips) containerChips.innerHTML = "";
-                renderizarColaboradoresDisponiveis();
-                resetarBotaoVerde();
-                window.open(linkWhatsapp, '_blank');
+                finalizarELimpar();
             }
         });
     }
