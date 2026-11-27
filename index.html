@@ -44,8 +44,14 @@
             width: 33%; height: 6px; background-color: var(--logo-green); z-index: 2;
         }
         .brand-logo {
-            width: 100%; max-width: 280px; height: auto; object-fit: contain;
-            background: white; padding: 10px; border-radius: 6px; border: 2px solid var(--logo-orange);
+            width: 100%;
+            max-width: 280px;
+            height: auto;
+            object-fit: contain;
+            background: white;
+            padding: 10px;
+            border-radius: 6px;
+            border: 2px solid var(--logo-orange);
         }
         .header-text { width: 100%; }
         .header-card h1 { margin: 5px 0 0 0; font-size: 22px; text-transform: uppercase; letter-spacing: 1px; }
@@ -56,13 +62,6 @@
             cursor: pointer; font-size: 11px; font-weight: bold; transition: 0.2s;
         }
         .admin-btn:hover { background: var(--logo-orange); }
-        
-        /* Chaves Seletoras do Fluxo Dinâmico */
-        .flow-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px; }
-        .flow-btn { padding: 16px; font-size: 15px; font-weight: bold; border: 2px solid var(--border); border-radius: 8px; cursor: pointer; background: white; transition: 0.2s; }
-        .flow-btn.active-in { background: var(--logo-blue); color: white; border-color: var(--logo-blue); }
-        .flow-btn.active-out { background: var(--logo-orange); color: white; border-color: var(--logo-orange); }
-        
         .card { background: var(--card-bg); padding: 20px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid var(--border); }
         .border-blue { border-left: 5px solid var(--logo-blue); }
         .border-orange { border-left: 5px solid var(--logo-orange); }
@@ -80,14 +79,18 @@
         .selected-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
         .chip { background-color: var(--logo-blue); color: white; padding: 5px 10px; border-radius: 16px; font-size: 12px; display: inline-flex; align-items: center; gap: 8px; }
         .chip button { background: rgba(255, 255, 255, 0.25); border: none; color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 12px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
+        .chip button:hover { background: #ff4d4d; }
         .checkbox-group { max-height: 200px; overflow-y: auto; border: 1px solid var(--border); padding: 10px; border-radius: 4px; background: #fafafa; }
         .checkbox-item { display: flex; align-items: center; margin-bottom: 8px; }
         .checkbox-item input { margin-right: 10px; }
         .btn-group { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
         button.main-btn { padding: 14px 10px; border: none; border-radius: 4px; font-size: 13px; font-weight: bold; cursor: pointer; transition: 0.2s; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .btn-blue { background-color: var(--logo-blue); }
+        .btn-blue:hover { background-color: #003d82; }
         .btn-orange { background-color: var(--logo-orange); }
+        .btn-orange:hover { background-color: #d46500; }
         .btn-green { background-color: var(--logo-green); }
+        .btn-green:hover { background-color: #008040; }
         #previewArea { background: #e9ecef; padding: 15px; border-radius: 4px; white-space: pre-wrap; font-family: monospace; font-size: 13px; display: none; margin-bottom: 15px; border: 1px dashed #adb5bd; }
         .hidden { display: none !important; }
         .admin-panel { background: #fff3cd; border: 1px solid #ffeeba; color: #856404; }
@@ -104,10 +107,6 @@
         </div>
     </div>
 
-    <div class="flow-selector">
-        <button type="button" id="btnFlowIn" class="flow-btn active-in" onclick="alterarFluxo('IN')">📥 FAZER CHECK-IN</button>
-        <button type="button" id="btnFlowOut" class="flow-btn" onclick="alterarFluxo('OUT')">📤 FAZER CHECK-OUT</button>
-    </div>
     <div id="adminPanel" class="card admin-panel hidden">
         <h3>Configurações do Administrador</h3>
         <label>URL do App da Web (Google Script):</label>
@@ -118,25 +117,15 @@
     </div>
 
     <form id="rdoForm" onsubmit="event.preventDefault();">
-        
-        <!-- CARD EXCLUSIVO DE SELEÇÃO DO CHECKOUT -->
-        <div id="card-checkout-pendente" class="card border-orange hidden">
-            <h3>Selecione o Check-in em Aberto <span>*</span></h3>
-            <div class="tip-box">💡 Escolha a frente iniciada de manhã para realizar o fechamento.</div>
-            <select id="checkoutSelecao" onchange="preencherCamposCheckout(this.value)">
-                <option value="">Escolher Trabalho em Aberto</option>
-            </select>
-        </div>
-
-        <div class="card border-blue campo-rdo">
+        <div class="card border-blue">
             <h3>Data do Relatório <span>*</span></h3>
-            <div class="tip-box">💡 Selecione a data de execução.</div>
+            <div class="tip-box">💡 Selecione a data de execução. Os colaboradores já escalados neste dia sairão da lista automaticamente.</div>
             <input type="date" id="dataRelatorio" onchange="renderizarColaboradoresDisponiveis()" required>
         </div>
 
-        <div class="card border-blue campo-rdo">
+        <div class="card border-blue">
             <h3>Disciplina <span>*</span></h3>
-            <div class="tip-box">💡 Setor de engenharia responsável.</div>
+            <div class="tip-box">💡 Escolha o setor de engenharia responsável pela atividade técnica.</div>
             <select id="disciplina" required>
                 <option value="">Escolher</option>
                 <option value="Civil">Civil</option>
@@ -145,56 +134,57 @@
             </select>
         </div>
 
-        <div class="card border-blue campo-rdo">
+        <div class="card border-blue">
             <h3>Líder / Encarregado <span>*</span></h3>
-            <div class="tip-box">💡 Supervisor responsável direto pelo serviço.</div>
+            <div class="tip-box">💡 Selecione o supervisor responsável pela execução direta do serviço.</div>
             <select id="lider" required>
                 <option value="">Escolher</option>
             </select>
         </div>
-
-        <div class="card border-blue campo-rdo">
+        <div class="card border-blue">
             <h3>Usina <span>*</span></h3>
-            <div class="tip-box">💡 Unidade fabril onde a frente está alocada.</div>
+            <div class="tip-box">💡 Marque a unidade fabril/operacional onde a frente está alocada.</div>
             <select id="usina" required>
                 <option value="">Escolher</option>
             </select>
         </div>
 
-        <div class="card border-blue campo-rdo">
+        <div class="card border-blue">
             <h3>Subárea <span>*</span></h3>
-            <div class="tip-box">💡 Subárea técnica correspondente.</div>
+            <div class="tip-box">💡 Especifique o local exato ou subsetor da atividade dentro da Usina.</div>
             <select id="subarea" required>
                 <option value="">Escolher</option>
             </select>
         </div>
 
-        <div class="card border-blue campo-rdo">
+        <div class="card border-blue">
             <h3>Fiscal <span>*</span></h3>
-            <div class="tip-box">💡 Fiscal responsável pela validação técnica.</div>
+            <div class="tip-box">💡 Informe o fiscal do cliente/consórcio mapeado para validação.</div>
             <select id="fiscal" required>
                 <option value="">Escolher</option>
             </select>
         </div>
-
-        <div class="card border-blue campo-rdo">
+        
+        <div class="card border-blue">
             <h3>Projeto <span>*</span></h3>
-            <div class="tip-box">💡 Contrato de engenharia correspondente.</div>
+            <div class="tip-box">💡 Selecione o projeto ou contrato correspondente a esta atividade.</div>
             <select id="projeto" required>
                 <option value="">Escolher</option>
             </select>
         </div>
 
-        <div class="card border-blue campo-rdo" id="card-colaboradores">
-            <h3>Colaboradores Disponíveis <span>*</span></h3>
-            <div class="tip-box">💡 Marque quem atuou nesta equipe hoje.</div>
-            <div class="selected-chips" id="colaboradores-selecionados"></div>
-            <div class="checkbox-group" id="container-colaboradores"></div>
+        <div class="card border-blue">
+            <h3>Colaboradores <span>*</span></h3>
+            <div class="tip-box">💡 Selecione todos os profissionais disponíveis para esta data.</div>
+            <div id="colaboradores-selecionados" class="selected-chips"></div>
+            <div class="checkbox-group" id="container-colaboradores">
+                <div style="color:#666;font-size:12px;">Selecione a data do relatório primeiro...</div>
+            </div>
         </div>
 
-        <div class="card border-orange campo-rdo">
+        <div class="card border-orange">
             <h3>HH ou PRODUÇÃO <span>*</span></h3>
-            <div class="tip-box">💡 Defina a métrica de faturamento.</div>
+            <div class="tip-box">💡 Defina se a métrica de faturamento/apontamento será por Homem-Hora ou Produção.</div>
             <select id="hhProducao" required>
                 <option value="">Escolher</option>
                 <option value="HH">HH</option>
@@ -202,40 +192,40 @@
             </select>
         </div>
 
-        <div class="card border-orange campo-rdo">
+        <div class="card border-orange">
             <h3>Equipamento <span>*</span></h3>
-            <div class="tip-box">💡 Equipamentos utilizados ou escreva "Nenhum".</div>
+            <div class="tip-box">💡 Indique as máquinas/ferramentas de grande porte utilizadas. Se não houver, digite "Nenhum".</div>
             <input type="text" id="equipamento" placeholder="Ex: Escavadeira XYZ ou 'Nenhum'" required>
         </div>
 
-        <div class="card border-orange campo-rdo">
+        <div class="card border-orange">
             <h3>Atividade <span>*</span></h3>
-            <div class="tip-box">💡 Progresso físico ou técnico realizado.</div>
-            <textarea id="atividade" rows="3" placeholder="Ex: Escavação mecânica..." required></textarea>
+            <div class="tip-box">💡 Descreva de forma técnica e resumida o progresso físico realizado no dia.</div>
+            <textarea id="atividade" rows="3" placeholder="Ex: Escavação mecânica de valas para rede interna..." required></textarea>
         </div>
 
-        <div class="card border-orange campo-rdo">
-            <h3>Impactos Mão de Obra <span>*</span></h3>
-            <div class="tip-box">💡 Faltas, atrasos ou condições climáticas ou "Nenhum".</div>
-            <input type="text" id="impactos" placeholder="Digite os impactos ou 'Nenhum'" required>
-        </div>
-        <!-- CAMPOS EXCLUSIVOS DO CHECKOUT (OCULTOS NO CHECKIN) -->
-        <div class="card border-orange campo-checkout-exclusivo hidden">
+        <div class="card border-orange">
             <h3>Desvios <span>*</span></h3>
-            <div class="tip-box">💡 Registre anomalias de SSMA ou escreva "Nenhum".</div>
-            <input type="text" id="desvios" placeholder="Digite o desvio ou escreva 'Nenhum'">
+            <div class="tip-box">💡 Registre qualquer anomalia de segurança, SSMA ou técnica. Se não houver, digite "Nenhum".</div>
+            <input type="text" id="desvios" placeholder="Digite o desvio ou escreva 'Nenhum'" required>
         </div>
 
-        <div class="card border-orange campo-checkout-exclusivo hidden">
+        <div class="card border-orange">
             <h3>Fotos da Atividade <span>*</span></h3>
-            <div class="tip-box">💡 Upload dos registros fotográficos obrigatórios (Até 10 fotos).</div>
-            <input type="file" id="fotos" multiple accept="image/*">
+            <div class="tip-box">💡 Faça o upload dos registros fotográficos obrigatórios (Selecione até 10 fotos).</div>
+            <input type="file" id="fotos" required multiple accept="image/*">
         </div>
 
-        <div class="card border-green campo-checkout-exclusivo hidden">
-            <h3>Status da Atividade <span>*</span></h3>
-            <div class="tip-box">💡 Condição real de encerramento do turno.</div>
-            <select id="statusAtividade">
+        <div class="card border-orange">
+            <h3>Impactos Mão de Obra <span>*</span></h3>
+            <div class="tip-box">💡 Registre faltas, atrasos ou paralisações climáticas. Se estiver tudo normal, digite "Nenhum".</div>
+            <input type="text" id="impactos" placeholder="Digite os impactos identificados ou escreva 'Nenhum'" required>
+        </div>
+
+        <div class="card border-green">
+            <h3>9. Status da Atividade <span>*</span></h3>
+            <div class="tip-box">💡 Indique a condição real de encerramento da meta diária desta atividade.</div>
+            <select id="statusAtividade" required>
                 <option value="Concluída">Concluída</option>
                 <option value="Parcialmente Concluída">Parcialmente Concluída</option>
                 <option value="Em Andamento">Em Andamento</option>
@@ -243,15 +233,15 @@
             </select>
         </div>
 
-        <div class="card border-green campo-checkout-exclusivo hidden">
-            <h3>Materiais Pendentes</h3>
-            <div class="tip-box">💡 Insumos críticos faltantes ou escreva "Nenhum".</div>
+        <div class="card border-green">
+            <h3>10. Materiais Pendentes</h3>
+            <div class="tip-box">💡 Liste insumos ou materiais críticos faltantes. Se não houver pendências, digite "Nenhum".</div>
             <textarea id="materiaisPendentes" rows="3" placeholder="Escreva o material pendente ou digite 'Nenhum'"></textarea>
         </div>
 
-        <div class="card border-green campo-checkout-exclusivo hidden">
-            <h3>Observações</h3>
-            <div class="tip-box">💡 Espaço livre para notas operacionais ou "Nenhuma".</div>
+        <div class="card border-green">
+            <h3>11. Observações</h3>
+            <div class="tip-box">💡 Espaço livre para adicionar qualquer comentário extra ou histórico relevante sobre o dia ou digite 'Nenhuma'.</div>
             <textarea id="observacoes" rows="3" placeholder="Informações adicionais livres ou digite 'Nenhuma'"></textarea>
         </div>
 
@@ -259,124 +249,43 @@
 
         <div class="btn-group">
             <button type="button" class="main-btn btn-blue" onclick="forçarMensagemManual()">📋 Montar Msg</button>
-            <button type="button" class="main-btn btn-orange" onclick="alert('Use o botão verde! Ele salva os dados e aciona o WhatsApp.')">💾 Salvar</button>
+            <button type="button" class="main-btn btn-orange" onclick="alert('Use o botão verde de WhatsApp! Ele já salva na planilha automaticamente.')">💾 Salvar Planilha</button>
             <button type="button" class="main-btn btn-green" onclick="enviarGrupo()">🟢 WhatsApp / Enviar</button>
         </div>
     </form>
 </div>
-
 <script>
     let msgPronta = "";
     let listaTodosColaboradores = [];
-    let ocupadosPorData = {};
-    let checkinsAbertosGeral = [];
-    let fluxoAtivo = "IN"; 
-    let idSelecionadoCheckout = null;
+    let ocupadosPorData = {}; // Formato esperado: { "2026-11-20": ["João", "Maria"] }
 
     window.onload = function() {
         const urlParams = new URLSearchParams(window.location.search);
         const urlDoLink = urlParams.get('url');
-        if (urlDoLink) localStorage.setItem('scriptUrl', urlDoLink);
+        if (urlDoLink) {
+            localStorage.setItem('scriptUrl', urlDoLink);
+        }
 
-        if(localStorage.getItem('scriptUrl')) document.getElementById('scriptUrl').value = localStorage.getItem('scriptUrl');
-        if(localStorage.getItem('whatsappLink')) document.getElementById('whatsappLink').value = localStorage.getItem('whatsappLink');
+        if(localStorage.getItem('scriptUrl')) {
+            document.getElementById('scriptUrl').value = localStorage.getItem('scriptUrl');
+        }
+        if(localStorage.getItem('whatsappLink')) {
+            document.getElementById('whatsappLink').value = localStorage.getItem('whatsappLink');
+        }
 
+        // Define a data de hoje por padrão
         definirDataHoje();
         carregarDadosPlanilha();
     };
-
-    function alterarFluxo(tipo) {
-        fluxoAtivo = tipo;
-        const btnIn = document.getElementById('btnFlowIn');
-        const btnOut = document.getElementById('btnFlowOut');
-        const cardPendentes = document.getElementById('card-checkout-pendente');
-        const camposCheckout = document.querySelectorAll('.campo-checkout-exclusivo');
-        const camposRdo = document.querySelectorAll('.campo-rdo');
-        const rdoForm = document.getElementById('rdoForm');
-
-        rdoForm.reset();
-        document.getElementById('colaboradores-selecionados').innerHTML = "";
-        document.getElementById('previewArea').style.display = "none";
-        definirDataHoje();
-
-        if (tipo === "IN") {
-            btnIn.className = "flow-btn active-in";
-            btnOut.className = "flow-btn";
-            cardPendentes.classList.add('hidden');
-            camposCheckout.forEach(c => { 
-                c.classList.add('hidden'); 
-                c.querySelectorAll('input, select, textarea').forEach(i => i.required = false); 
-            });
-            camposRdo.forEach(c => { 
-                c.classList.remove('hidden'); 
-                c.querySelectorAll('input, select, textarea').forEach(i => { i.disabled = false; }); 
-            });
-            document.getElementById('dataRelatorio').disabled = false;
-            renderizarColaboradoresDisponiveis();
-        } else {
-            btnIn.className = "flow-btn";
-            btnOut.className = "flow-btn active-out";
-            cardPendentes.classList.remove('hidden');
-            camposCheckout.forEach(c => { 
-                c.classList.remove('hidden'); 
-                c.querySelectorAll('input, select').forEach(i => { if(i.id === "desvios") i.required = true; }); 
-            });
-            camposRdo.forEach(c => { 
-                c.querySelectorAll('input, select, textarea').forEach(i => { i.disabled = true; }); 
-            });
-            
-            const selectCheck = document.getElementById('checkoutSelecao');
-            selectCheck.length = 1;
-            checkinsAbertosGeral.forEach(item => {
-                const opt = document.createElement('option');
-                opt.value = item.id;
-                opt.textContent = `ID: ${item.id} | Encarregado: ${item.lider} (${item.disciplina})`;
-                selectCheck.appendChild(opt);
-            });
-        }
-    }
-
-    function preencherCamposCheckout(idValue) {
-        if (!idValue) return;
-        idSelecionadoCheckout = idValue;
-        const trabalho = checkinsAbertosGeral.find(c => c.id == idValue);
-        if (!trabalho) return;
-
-        document.getElementById('dataRelatorio').value = trabalho.data;
-        document.getElementById('disciplina').value = trabalho.disciplina;
-        document.getElementById('lider').value = trabalho.lider;
-        document.getElementById('usina').value = trabalho.usina;
-        document.getElementById('subarea').value = trabalho.subarea;
-        document.getElementById('fiscal').value = trabalho.fiscal;
-        document.getElementById('projeto').value = trabalho.projeto;
-        document.getElementById('hhProducao').value = trabalho.hhProducao;
-        document.getElementById('equipamento').value = trabalho.equipamento;
-        document.getElementById('atividade').value = trabalho.atividade;
-        document.getElementById('impactos').value = trabalho.impactos;
-
-        // Ativa especificamente os campos textuais editáveis no encerramento do dia
-        document.getElementById('atividade').disabled = false;
-        document.getElementById('impactos').disabled = false;
-
-        const containerChips = document.getElementById('colaboradores-selecionados');
-        containerChips.innerHTML = "";
-        trabalho.colaboradores.split(',').forEach(nome => {
-            if(nome.trim()){
-                const chip = document.createElement('div');
-                chip.className = 'chip';
-                chip.innerHTML = `<span>${nome.trim()}</span>`;
-                containerChips.appendChild(chip);
-            }
-        });
-        document.getElementById('card-colaboradores').classList.remove('hidden');
-        document.getElementById('container-colaboradores').innerHTML = "<div style='color:green;font-size:12px;'>Membros fixados no Check-in.</div>";
-    }
 
     function definirDataHoje() {
         const inputData = document.getElementById('dataRelatorio');
         if (inputData && !inputData.value) {
             const hoje = new Date();
-            inputData.value = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`;
+            const ano = hoje.getFullYear();
+            const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+            const dia = String(hoje.getDate()).padStart(2, '0');
+            inputData.value = `${ano}-${mes}-${dia}`;
         }
     }
 
@@ -395,27 +304,34 @@
 
             listaTodosColaboradores = dados.colaboradores || [];
             ocupadosPorData = dados.ocupadosPorData || {};
-            checkinsAbertosGeral = dados.checkinsAbertos || [];
 
             renderizarColaboradoresDisponiveis();
         })
-        .catch(err => console.error("Erro ao carregar dados: " + err));
+        .catch(err => console.error("Erro ao carregar banco de dados: " + err));
     }
     function renderizarColaboradoresDisponiveis() {
-        if(fluxoAtivo === "OUT") return;
         const containerColab = document.getElementById('container-colaboradores');
         const containerChips = document.getElementById('colaboradores-selecionados');
         const dataSelecionada = document.getElementById('dataRelatorio').value;
         
         containerColab.innerHTML = "";
         if (containerChips) containerChips.innerHTML = "";
-        if (!dataSelecionada) return;
+
+        if (!dataSelecionada) {
+            containerColab.innerHTML = "<div style='color:#666;font-size:12px;'>Selecione uma data acima para ver os colaboradores disponíveis.</div>";
+            return;
+        }
+
+        if (listaTodosColaboradores.length === 0) {
+            containerColab.innerHTML = "<div style='color:red;font-size:12px;'>Nenhum colaborador carregado da planilha.</div>";
+            return;
+        }
 
         const ocupadosHoje = (ocupadosPorData[dataSelecionada] || []).map(n => n.trim().toLowerCase());
         const disponiveis = listaTodosColaboradores.filter(nome => !ocupadosHoje.includes(nome.trim().toLowerCase()));
 
         if (disponiveis.length === 0) {
-            containerColab.innerHTML = "<div style='color:red;font-size:12px;'>Nenhum colaborador livre nesta data!</div>";
+            containerColab.innerHTML = "<div style='color:red;font-size:12px;'>Todos os colaboradores já foram escalados nesta data!</div>";
             return;
         }
 
@@ -442,7 +358,9 @@
 
     function removerColaborador(nome) {
         document.querySelectorAll('input[name="colab"]').forEach(cb => {
-            if (cb.value === nome) cb.checked = false;
+            if (cb.value === nome) {
+                cb.checked = false;
+            }
         });
         atualizarChipsColaboradores();
     }
@@ -458,20 +376,16 @@
             });
         }
     }
-
     function obterDados(callback) {
         let colabs = [];
-        if (fluxoAtivo === "IN") {
-            document.querySelectorAll('input[name="colab"]:checked').forEach(cb => colabs.push(cb.value));
-            if (colabs.length === 0) { alert("⚠️ Selecione pelo menos 1 colaborador!"); return; }
-        } else {
-            const trab = checkinsAbertosGeral.find(c => c.id == idSelecionadoCheckout);
-            if(trab) colabs = trab.colaboradores.split(',').map(n => n.trim());
+        document.querySelectorAll('input[name="colab"]:checked').forEach(function(cb) { colabs.push(cb.value); });
+
+        if (colabs.length === 0) {
+            alert("⚠️ Selecione pelo menos 1 colaborador disponível!");
+            return;
         }
 
         let dados = {
-            tipoOperacao: fluxoAtivo,
-            idServico: fluxoAtivo === "OUT" ? idSelecionadoCheckout : null,
             dataRelatorio: document.getElementById('dataRelatorio').value,
             disciplina: document.getElementById('disciplina').value,
             lider: document.getElementById('lider').value,
@@ -482,21 +396,29 @@
             colaboradores: colabs.join(', '),
             colaboradoresArray: colabs,
             hhProducao: document.getElementById('hhProducao').value,
-            equipamento: document.getElementById('equipamento').value || "Nenhum",
-            atividade: document.getElementById('atividade').value || "Nenhuma",
-            impactos: document.getElementById('impactos').value || "Nenhum",
-            desvios: fluxoAtivo === "OUT" ? (document.getElementById('desvios').value || "Nenhum") : "Nenhum",
-            statusAtividade: fluxoAtivo === "OUT" ? document.getElementById('statusAtividade').value : "Aberto",
-            materialsPendentes: fluxoAtivo === "OUT" ? (document.getElementById('materiaisPendentes').value || "Nenhum") : "Nenhum",
-            observacoes: fluxoAtivo === "OUT" ? (document.getElementById('observacoes').value || "Nenhuma") : "Nenhuma",
+            equipamento: document.getElementById('equipamento').value,
+            atividade: document.getElementById('atividade').value,
+            desvios: document.getElementById('desvios').value,
+            impactos: document.getElementById('impactos').value,
+            statusAtividade: document.getElementById('statusAtividade').value,
+            materialsPendentes: document.getElementById('materiaisPendentes').value || "Nenhum",
+            observacoes: document.getElementById('observacoes').value || "Nenhuma",
             fotos: [] 
         };
 
         const fotoInput = document.getElementById('fotos');
-        const arquivos = (fotoInput && fluxoAtivo === "OUT") ? fotoInput.files : [];
+        const arquivos = fotoInput ? fotoInput.files : [];
 
-        if (arquivos.length > 10) { alert("⚠️ Limite Máximo Excedido: Máximo de 10 fotos!"); resetarBotaoVerde(); return; }
-        if (arquivos.length === 0) { callback(dados); return; }
+        if (arquivos.length > 10) {
+            alert("⚠️ Limite Máximo Excedido: Você só pode selecionar no máximo 10 fotos!");
+            resetarBotaoVerde();
+            return;
+        }
+
+        if (arquivos.length === 0) {
+            callback(dados);
+            return;
+        }
 
         let promessas = [];
         for (let i = 0; i < arquivos.length; i++) {
@@ -510,18 +432,22 @@
                         let maxLargura = 1280; 
                         let larguraOrig = img.width;
                         let alturaOrig = img.height;
+                        
                         if (larguraOrig > maxLargura) {
                             alturaOrig = Math.round((maxLargura * alturaOrig) / larguraOrig);
                             larguraOrig = maxLargura;
                         }
                         let canvas = document.createElement('canvas');
-                        canvas.width = larguraOrig; canvas.height = alturaOrig;
+                        canvas.width = larguraOrig;
+                        canvas.height = alturaOrig;
                         let ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, larguraOrig, alturaOrig);
                         
                         let base64Comprimido = canvas.toDataURL('image/jpeg', 0.7);
+                        let fragmentos = base64Comprimido.split(',')[1];
+                        
                         resolve({
-                            base64: base64Comprimido.split(','),
+                            base64: fragmentos, 
                             nome: arquivo.name.replace(/\.[^/.]+$/, "") + ".jpg",
                             tipo: 'image/jpeg'
                         });
@@ -532,16 +458,17 @@
             promessas.push(processarEComprimir);
         }
 
-        Promise.all(promessas).then(resultadoLote => { dados.fotos = resultadoLote; callback(dados); });
+        Promise.all(promessas).then(resultadoLote => {
+            dados.fotos = resultadoLote;
+            callback(dados);
+        });
     }
 
     function gerarTextoRDO(d) {
-        let headerTxt = d.tipoOperacao === "CHECK-IN" ? "📥 *CHECK-IN OPERACIONAL - FORÇA SUL*" : "📤 *CHECK-OUT CONCLUÍDO - FORÇA SUL*";
-        let msgPronta = ` ${headerTxt}\n\n`;
-        if(d.idServico) msgPronta += `🆔 *ID do Serviço:* ${d.idServico}\n`;
+        let msgPronta = " *RDO - CONSÓRCIO FORÇA SUL*\n\n";
         if (d.dataRelatorio) {
             const [ano, mes, dia] = d.dataRelatorio.split('-');
-            msgPronta += `📅 *Data:* ${dia}/${mes}/${ano}\n`;
+            msgPronta += `📅 *Data do Relatório:* ${dia}/${mes}/${ano}\n`;
         }
         msgPronta += `⚙️ *Disciplina:* ${d.disciplina}\n`;
         msgPronta += `👤 *Líder:* ${d.lider}\n`;
@@ -551,113 +478,125 @@
         msgPronta += `👥 *Equipe:* ${d.colaboradores || 'Nenhuma'}\n\n`;
         msgPronta += `📊 *Tipo:* ${d.hhProducao} | 🚜 *Equipamento:* ${d.equipamento}\n`;
         msgPronta += `📝 *Atividade:* ${d.atividade}\n`;
-        msgPronta += `🛑 *Impactos M.O:* ${d.impactos}\n`;
-        
-        if(d.tipoOperacao === "CHECK-OUT") {
-            msgPronta += `⚠️ *Desvios:* ${d.desvios}\n`;
-            msgPronta += `📌 *Status Final:* ${d.statusAtividade}\n`;
-            msgPronta += `📦 *Materiais Pendentes:* ${d.materialsPendentes}\n`;
-            msgPronta += `🔍 *Obs:* ${d.observacoes}\n\n`;
-        } else {
-            msgPronta += `📌 *Status RDO:* ⏳ Aguardando Turno de Checkout\n\n`;
-        }
+        msgPronta += `⚠️ *Desvios:* ${d.desvios}\n`;
+        msgPronta += `🛑 *Impactos M.O:* ${d.impactos}\n\n`;
+        msgPronta += `📌 *Status:* ${d.statusAtividade}\n`;
+        msgPronta += `📦 *Materiais Pendentes:* ${d.materialsPendentes}\n`;
+        msgPronta += `🔍 *Obs:* ${d.observacoes}\n\n`;
 
         const preview = document.getElementById('previewArea');
-        if (preview) { preview.innerText = msgPronta; preview.style.display = "block"; }
+        if (preview) {
+            preview.innerText = msgPronta;
+            preview.style.display = "block";
+        }
         navigator.clipboard.writeText(msgPronta);
     }
 
     function forçarMensagemManual() {
         const form = document.getElementById('rdoForm');
-        
-        // Bypass rápido para leitura de dados manual
-        const camposDesativados = form.querySelectorAll('input:disabled, select:disabled, textarea:disabled');
-        camposDesativados.forEach(i => i.disabled = false);
-
-        if(!form.checkValidity()) { alert("Preencha os campos obrigatórios!"); form.reportValidity(); if(fluxoAtivo === "OUT") camposDesativados.forEach(i => i.disabled = true); return; }
-        obterDados(dados => { 
-            gerarTextoRDO(dados); 
-            alert("Mensagem copiada com sucesso!"); 
-            if(fluxoAtivo === "OUT") camposDesativados.forEach(i => i.disabled = true);
+        if(!form.checkValidity()) { alert("Preencha os campos obrigatórios!"); form.reportValidity(); return; }
+        obterDados(function(dados) {
+            gerarTextoRDO(dados);
+            alert("Mensagem estruturada e copiada!");
         });
     }
 
     function resetarBotaoVerde() {
         const botaoVerde = document.querySelector('.btn-green');
         if (botaoVerde) {
-            botaoVerde.disabled = false; botaoVerde.style.opacity = "1";
-            botaoVerde.style.cursor = "pointer"; botaoVerde.innerHTML = "🟢 WhatsApp / Enviar";
+            botaoVerde.disabled = false;
+            botaoVerde.style.opacity = "1";
+            botaoVerde.style.cursor = "pointer";
+            botaoVerde.innerHTML = "🟢 WhatsApp / Enviar";
         }
     }
 
-    function enviarGrupo() {
+        function enviarGrupo() {
         const form = document.getElementById('rdoForm');
-        
-        // BYPASS DE SEGURANÇA: Ativa temporariamente todos os campos congelados para o HTML conseguir ler os valores
-        const camposDesativados = form.querySelectorAll('input:disabled, select:disabled, textarea:disabled');
-        camposDesativados.forEach(i => i.disabled = false);
+        if(!form.checkValidity()) { alert("Preencha todos os campos obrigatórios!"); form.reportValidity(); return; }
 
-        if(!form.checkValidity()) { 
-            alert("⚠️ Preencha todos os campos obrigatórios!"); 
-            form.reportValidity(); 
-if(fluxoAtivo === "OUT") camposDesativados.forEach(i => i.disabled = true);
-return;
-}
-const botaoVerde = document.querySelector('.btn-green');
-if (botaoVerde.disabled || botaoVerde.innerHTML.includes("⏳")) return;
-const urlPlanilha = document.getElementById('scriptUrl').value;
-const linkWhatsapp = document.getElementById('whatsappLink').value || "https://whatsapp.com";
-botaoVerde.disabled = true; botaoVerde.style.opacity = "0.5"; botaoVerde.style.cursor = "not-allowed";
-botaoVerde.innerHTML = "⏳ Transmitindo Pacote...";
-obterDados(dados => {
-if (!dados) {
-resetarBotaoVerde();
-if(fluxoAtivo === "OUT") camposDesativados.forEach(i => i.disabled = true);
-return;
-}
-gerarTextoRDO(dados);
-if (dados.tipoOperacao === "CHECK-IN" && !ocupadosPorData[dados.dataRelatorio]) {
-ocupadosPorData[dados.dataRelatorio] = [];
-}
-if (dados.tipoOperacao === "CHECK-IN") {
-ocupadosPorData[dados.dataRelatorio].push(...dados.colaboradoresArray);
-}
-const finalizarELimpar = () => {
-alert("Dados sincronizados com sucesso! Clique em OK para ir ao WhatsApp.");
-form.reset();
-document.getElementById('colaboradores-selecionados').innerHTML = "";
-document.getElementById('previewArea').style.display = "none";
-carregarDadosPlanilha();
-alterarFluxo("IN");
-window.open(linkWhatsapp, '_blank');
-};
-if(urlPlanilha) {
-fetch(urlPlanilha, {
-method: "POST",
-headers: { "Content-Type": "text/plain;charset=utf-8" },
-body: JSON.stringify(dados)
-})
-.then(() => finalizarELimpar())
-.catch(err => { console.error("Erro na transmissão:", err); finalizarELimpar(); });
-} else {
-finalizarELimpar();
-}
-});
-}
-function toggleAdmin() {
-const senha = prompt("Digite a senha do Administrator:");
-if (senha === "2026") {
-const painel = document.getElementById('adminPanel');
-if (painel) painel.classList.toggle('hidden');
-} else { alert("Senha incorreta!"); }
-}
-function saveAdmin() {
-    localStorage.setItem('scriptUrl', document.getElementById('scriptUrl').value);
-    localStorage.setItem('whatsappLink', document.getElementById('whatsappLink').value);
-    alert("Configurações salvas!");
-    document.getElementById('adminPanel').classList.add('hidden');
-    carregarDadosPlanilha();
-}
+        const botaoVerde = document.querySelector('.btn-green');
+        if (botaoVerde.disabled || botaoVerde.innerHTML.includes("⏳")) return;
+
+        const urlPlanilha = document.getElementById('scriptUrl').value;
+        const linkWhatsapp = document.getElementById('whatsappLink').value || "https://whatsapp.com";
+
+        // 1. Ativa a ampulheta imediatamente ao clicar
+        botaoVerde.disabled = true;
+        botaoVerde.style.opacity = "0.5";
+        botaoVerde.style.cursor = "not-allowed";
+        botaoVerde.innerHTML = "⏳ Enviando Dados e Fotos...";
+
+        obterDados(function(dados) {
+            if (!dados) {
+                resetarBotaoVerde();
+                return;
+            }
+
+            gerarTextoRDO(dados);
+
+            // Bloqueia localmente na hora para a data enviada
+            if (!ocupadosPorData[dados.dataRelatorio]) {
+                ocupadosPorData[dados.dataRelatorio] = [];
+            }
+            ocupadosPorData[dados.dataRelatorio].push(...dados.colaboradoresArray);
+
+            const finalizarELimpar = function() {
+                // 3. Mostra o aviso SOMENTE após terminar de carregar/salvar
+                alert("Formulário RDO enviado com sucesso!\n\nO relatório foi copiado. Clique em OK para ir ao WhatsApp.");
+                
+                // 4. Faz o reboot limpando a página logo após clicar em OK
+                form.reset(); 
+                const containerChips = document.getElementById('colaboradores-selecionados');
+                if (containerChips) containerChips.innerHTML = "";
+                const preview = document.getElementById('previewArea');
+                if (preview) preview.style.display = "none";
+                
+                definirDataHoje();
+                renderizarColaboradoresDisponiveis();
+                resetarBotaoVerde();
+                window.open(linkWhatsapp, '_blank');
+            };
+
+            // 2. Envia os dados e fotos para a planilha enquanto a ampulheta gira
+            if(urlPlanilha) {
+                fetch(urlPlanilha, {
+                    method: "POST",
+                    headers: { "Content-Type": "text/plain;charset=utf-8" },
+                    body: JSON.stringify(dados)
+                })
+                .then(function() { 
+                    finalizarELimpar();
+                })
+                .catch(function(err) { 
+                    console.error("Erro na transmissão do pacote:", err);
+                    finalizarELimpar();
+                });
+            } else {
+                finalizarELimpar();
+            }
+        });
+    }
+
+    function toggleAdmin() {
+        const senha = prompt("Digite a senha do Administrator:");
+        if (senha === "2026") { 
+            const painel = document.getElementById('adminPanel');
+            if (painel) painel.classList.toggle('hidden'); 
+        } else { 
+            alert("Senha incorreta!"); 
+        }
+    }
+
+    function saveAdmin() {
+        const urlScript = document.getElementById('scriptUrl').value;
+        const linkWhats = document.getElementById('whatsappLink').value;
+        localStorage.setItem('scriptUrl', urlScript);
+        localStorage.setItem('whatsappLink', linkWhats);
+        alert("Configurações salvas!");
+        document.getElementById('adminPanel').classList.add('hidden');
+        carregarDadosPlanilha();
+    }
 </script>
 </body>
 </html>
