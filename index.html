@@ -104,7 +104,6 @@
         </div>
     </div>
 
-    <!-- CHAVE SELETORA PRINCIPAL -->
     <div class="flow-selector">
         <button type="button" id="btnFlowIn" class="flow-btn active-in" onclick="alterarFluxo('IN')">📥 FAZER CHECK-IN</button>
         <button type="button" id="btnFlowOut" class="flow-btn" onclick="alterarFluxo('OUT')">📤 FAZER CHECK-OUT</button>
@@ -286,7 +285,7 @@
         carregarDadosPlanilha();
     };
 
-        function alterarFluxo(tipo) {
+    function alterarFluxo(tipo) {
         fluxoAtivo = tipo;
         const btnIn = document.getElementById('btnFlowIn');
         const btnOut = document.getElementById('btnFlowOut');
@@ -304,42 +303,28 @@
             btnIn.className = "flow-btn active-in";
             btnOut.className = "flow-btn";
             cardPendentes.classList.add('hidden');
-            
-            // Esconde os campos exclusivos de checkout
             camposCheckout.forEach(c => { 
                 c.classList.add('hidden'); 
                 c.querySelectorAll('input, select, textarea').forEach(i => i.required = false); 
             });
-            
-            // ATIVA TODOS OS CAMPOS DO CHECK-IN (Equipamento, Atividade, Impactos, etc.)
             camposRdo.forEach(c => { 
                 c.classList.remove('hidden'); 
-                c.querySelectorAll('input, select, textarea').forEach(i => { 
-                    i.disabled = false; // <-- CORRIGIDO: Garante que os campos fiquem editáveis no Check-in
-                }); 
+                c.querySelectorAll('input, select, textarea').forEach(i => { i.disabled = false; }); 
             });
-            
             document.getElementById('dataRelatorio').disabled = false;
             renderizarColaboradoresDisponiveis();
         } else {
             btnIn.className = "flow-btn";
             btnOut.className = "flow-btn active-out";
             cardPendentes.classList.remove('hidden');
-            
-            // Mostra os campos de checkout e coloca desvios como obrigatório
             camposCheckout.forEach(c => { 
                 c.classList.remove('hidden'); 
                 c.querySelectorAll('input, select').forEach(i => { if(i.id === "desvios") i.required = true; }); 
             });
-            
-            // DESATIVA os campos cadastrados de manhã para evitar que o usuário mude o líder ou usina no checkout
             camposRdo.forEach(c => { 
-                c.querySelectorAll('input, select, textarea').forEach(i => { 
-                    i.disabled = true; 
-                }); 
+                c.querySelectorAll('input, select, textarea').forEach(i => { i.disabled = true; }); 
             });
             
-            // Libera o dropdown de check-ins abertos
             const selectCheck = document.getElementById('checkoutSelecao');
             selectCheck.length = 1;
             checkinsAbertosGeral.forEach(item => {
@@ -369,6 +354,7 @@
         document.getElementById('atividade').value = trabalho.atividade;
         document.getElementById('impactos').value = trabalho.impactos;
 
+        // Ativa especificamente os campos textuais editáveis no encerramento do dia
         document.getElementById('atividade').disabled = false;
         document.getElementById('impactos').disabled = false;
 
@@ -473,7 +459,7 @@
         }
     }
 
-       function obterDados(callback) {
+    function obterDados(callback) {
         let colabs = [];
         if (fluxoAtivo === "IN") {
             document.querySelectorAll('input[name="colab"]:checked').forEach(cb => colabs.push(cb.value));
@@ -535,7 +521,7 @@
                         
                         let base64Comprimido = canvas.toDataURL('image/jpeg', 0.7);
                         resolve({
-                            base64: base64Comprimido.split(',')[1],
+                            base64: base64Comprimido.split(','),
                             nome: arquivo.name.replace(/\.[^/.]+$/, "") + ".jpg",
                             tipo: 'image/jpeg'
                         });
@@ -583,8 +569,17 @@
 
     function forçarMensagemManual() {
         const form = document.getElementById('rdoForm');
-        if(!form.checkValidity()) { alert("Preencha os campos obrigatórios!"); form.reportValidity(); return; }
-        obterDados(dados => { gerarTextoRDO(dados); alert("Mensagem copiada com sucesso!"); });
+        
+        // Bypass rápido para leitura de dados manual
+        const camposDesativados = form.querySelectorAll('input:disabled, select:disabled, textarea:disabled');
+        camposDesativados.forEach(i => i.disabled = false);
+
+        if(!form.checkValidity()) { alert("Preencha os campos obrigatórios!"); form.reportValidity(); if(fluxoAtivo === "OUT") camposDesativados.forEach(i => i.disabled = true); return; }
+        obterDados(dados => { 
+            gerarTextoRDO(dados); 
+            alert("Mensagem copiada com sucesso!"); 
+            if(fluxoAtivo === "OUT") camposDesativados.forEach(i => i.disabled = true);
+        });
     }
 
     function resetarBotaoVerde() {
@@ -597,69 +592,72 @@
 
     function enviarGrupo() {
         const form = document.getElementById('rdoForm');
-        if(!form.checkValidity()) { alert("Preencha todos os campos obrigatórios!"); form.reportValidity(); return; }
+        
+        // BYPASS DE SEGURANÇA: Ativa temporariamente todos os campos congelados para o HTML conseguir ler os valores
+        const camposDesativados = form.querySelectorAll('input:disabled, select:disabled, textarea:disabled');
+        camposDesativados.forEach(i => i.disabled = false);
 
-        const botaoVerde = document.querySelector('.btn-green');
-        if (botaoVerde.disabled || botaoVerde.innerHTML.includes("⏳")) return;
-
-        const urlPlanilha = document.getElementById('scriptUrl').value;
-        const linkWhatsapp = document.getElementById('whatsappLink').value || "https://whatsapp.com";
-
-        botaoVerde.disabled = true; botaoVerde.style.opacity = "0.5"; botaoVerde.style.cursor = "not-allowed";
-        botaoVerde.innerHTML = "⏳ Transmitindo Pacote...";
-
-        obterDados(dados => {
-            if (!dados) { resetarBotaoVerde(); return; }
-            gerarTextoRDO(dados);
-
-            if (dados.tipoOperacao === "CHECK-IN" && !ocupadosPorData[dados.dataRelatorio]) {
-                ocupadosPorData[dados.dataRelatorio] = [];
-            }
-            if (dados.tipoOperacao === "CHECK-IN") {
-                ocupadosPorData[dados.dataRelatorio].push(...dados.colaboradoresArray);
-            }
-
-            const finalizarELimpar = () => {
-                alert("Dados sincronizados com sucesso! Clique em OK para ir ao WhatsApp.");
-                form.reset();
-                document.getElementById('colaboradores-selecionados').innerHTML = "";
-                document.getElementById('previewArea').style.display = "none";
-                
-                carregarDadosPlanilha();
-                alterarFluxo("IN");
-                window.open(linkWhatsapp, '_blank');
-            };
-
-            if(urlPlanilha) {
-                fetch(urlPlanilha, {
-                    method: "POST",
-                    headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify(dados)
-                })
-                .then(() => finalizarELimpar())
-                .catch(err => { console.error("Erro na transmissão:", err); finalizarELimpar(); });
-            } else {
-                finalizarELimpar();
-            }
-        });
-    }
-
-    function toggleAdmin() {
-        const senha = prompt("Digite a senha do Administrator:");
-        if (senha === "2026") {
-            const painel = document.getElementById('adminPanel');
-            if (painel) painel.classList.toggle('hidden');
-        } else { alert("Senha incorreta!"); }
-    }
-
-    function saveAdmin() {
-        localStorage.setItem('scriptUrl', document.getElementById('scriptUrl').value);
-        localStorage.setItem('whatsappLink', document.getElementById('whatsappLink').value);
-        alert("Configurações salvas!");
-        document.getElementById('adminPanel').classList.add('hidden');
-        carregarDadosPlanilha();
-    }
+        if(!form.checkValidity()) { 
+            alert("⚠️ Preencha todos os campos obrigatórios!"); 
+            form.reportValidity(); 
+if(fluxoAtivo === "OUT") camposDesativados.forEach(i => i.disabled = true);
+return;
+}
+const botaoVerde = document.querySelector('.btn-green');
+if (botaoVerde.disabled || botaoVerde.innerHTML.includes("⏳")) return;
+const urlPlanilha = document.getElementById('scriptUrl').value;
+const linkWhatsapp = document.getElementById('whatsappLink').value || "https://whatsapp.com";
+botaoVerde.disabled = true; botaoVerde.style.opacity = "0.5"; botaoVerde.style.cursor = "not-allowed";
+botaoVerde.innerHTML = "⏳ Transmitindo Pacote...";
+obterDados(dados => {
+if (!dados) {
+resetarBotaoVerde();
+if(fluxoAtivo === "OUT") camposDesativados.forEach(i => i.disabled = true);
+return;
+}
+gerarTextoRDO(dados);
+if (dados.tipoOperacao === "CHECK-IN" && !ocupadosPorData[dados.dataRelatorio]) {
+ocupadosPorData[dados.dataRelatorio] = [];
+}
+if (dados.tipoOperacao === "CHECK-IN") {
+ocupadosPorData[dados.dataRelatorio].push(...dados.colaboradoresArray);
+}
+const finalizarELimpar = () => {
+alert("Dados sincronizados com sucesso! Clique em OK para ir ao WhatsApp.");
+form.reset();
+document.getElementById('colaboradores-selecionados').innerHTML = "";
+document.getElementById('previewArea').style.display = "none";
+carregarDadosPlanilha();
+alterarFluxo("IN");
+window.open(linkWhatsapp, '_blank');
+};
+if(urlPlanilha) {
+fetch(urlPlanilha, {
+method: "POST",
+headers: { "Content-Type": "text/plain;charset=utf-8" },
+body: JSON.stringify(dados)
+})
+.then(() => finalizarELimpar())
+.catch(err => { console.error("Erro na transmissão:", err); finalizarELimpar(); });
+} else {
+finalizarELimpar();
+}
+});
+}
+function toggleAdmin() {
+const senha = prompt("Digite a senha do Administrator:");
+if (senha === "2026") {
+const painel = document.getElementById('adminPanel');
+if (painel) painel.classList.toggle('hidden');
+} else { alert("Senha incorreta!"); }
+}
+function saveAdmin() {
+    localStorage.setItem('scriptUrl', document.getElementById('scriptUrl').value);
+    localStorage.setItem('whatsappLink', document.getElementById('whatsappLink').value);
+    alert("Configurações salvas!");
+    document.getElementById('adminPanel').classList.add('hidden');
+    carregarDadosPlanilha();
+}
 </script>
 </body>
 </html>
-
