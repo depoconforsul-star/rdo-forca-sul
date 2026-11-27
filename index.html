@@ -286,7 +286,7 @@
         carregarDadosPlanilha();
     };
 
-    function alterarFluxo(tipo) {
+        function alterarFluxo(tipo) {
         fluxoAtivo = tipo;
         const btnIn = document.getElementById('btnFlowIn');
         const btnOut = document.getElementById('btnFlowOut');
@@ -304,17 +304,42 @@
             btnIn.className = "flow-btn active-in";
             btnOut.className = "flow-btn";
             cardPendentes.classList.add('hidden');
-            camposCheckout.forEach(c => { c.classList.add('hidden'); c.querySelectorAll('input, select, textarea').forEach(i => i.required = false); });
-            camposRdo.forEach(c => { c.classList.remove('hidden'); c.querySelectorAll('input, select, textarea').forEach(i => { if(i.id !== "container-colaboradores") i.disabled = false; }); });
+            
+            // Esconde os campos exclusivos de checkout
+            camposCheckout.forEach(c => { 
+                c.classList.add('hidden'); 
+                c.querySelectorAll('input, select, textarea').forEach(i => i.required = false); 
+            });
+            
+            // ATIVA TODOS OS CAMPOS DO CHECK-IN (Equipamento, Atividade, Impactos, etc.)
+            camposRdo.forEach(c => { 
+                c.classList.remove('hidden'); 
+                c.querySelectorAll('input, select, textarea').forEach(i => { 
+                    i.disabled = false; // <-- CORRIGIDO: Garante que os campos fiquem editáveis no Check-in
+                }); 
+            });
+            
             document.getElementById('dataRelatorio').disabled = false;
             renderizarColaboradoresDisponiveis();
         } else {
             btnIn.className = "flow-btn";
             btnOut.className = "flow-btn active-out";
             cardPendentes.classList.remove('hidden');
-            camposCheckout.forEach(c => { c.classList.remove('hidden'); c.querySelectorAll('input, select').forEach(i => { if(i.id === "desvios") i.required = true; }); });
-            camposRdo.forEach(c => { c.querySelectorAll('input, select, textarea').forEach(i => i.disabled = true); });
             
+            // Mostra os campos de checkout e coloca desvios como obrigatório
+            camposCheckout.forEach(c => { 
+                c.classList.remove('hidden'); 
+                c.querySelectorAll('input, select').forEach(i => { if(i.id === "desvios") i.required = true; }); 
+            });
+            
+            // DESATIVA os campos cadastrados de manhã para evitar que o usuário mude o líder ou usina no checkout
+            camposRdo.forEach(c => { 
+                c.querySelectorAll('input, select, textarea').forEach(i => { 
+                    i.disabled = true; 
+                }); 
+            });
+            
+            // Libera o dropdown de check-ins abertos
             const selectCheck = document.getElementById('checkoutSelecao');
             selectCheck.length = 1;
             checkinsAbertosGeral.forEach(item => {
