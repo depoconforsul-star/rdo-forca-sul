@@ -62,6 +62,69 @@
             cursor: pointer; font-size: 11px; font-weight: bold; transition: 0.2s;
         }
         .admin-btn:hover { background: var(--logo-orange); }
+
+        /* Seletor de Modo Check-in / Check-out */
+        .mode-switcher {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .mode-btn {
+            padding: 15px 10px;
+            border: 2px solid transparent;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            background: white;
+            color: var(--text);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+        }
+        .mode-btn.active-checkin {
+            background: var(--logo-green);
+            color: white;
+            border-color: #007a40;
+        }
+        .mode-btn.active-checkout {
+            background: var(--logo-orange);
+            color: white;
+            border-color: #c75f00;
+        }
+
+        /* Cards de seleção de RDO pendente */
+        .rdo-pendente-card {
+            border: 1px solid var(--border);
+            border-left: 5px solid var(--logo-orange);
+            background: #fffaf5;
+            padding: 14px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .rdo-pendente-card:hover {
+            background: #fff0e0;
+            transform: translateY(-1px);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.08);
+        }
+        .rdo-pendente-card.selected {
+            border: 2px solid var(--logo-blue);
+            border-left: 6px solid var(--logo-blue);
+            background: #eef6ff;
+        }
+        .rdo-badge {
+            display: inline-block;
+            background: var(--logo-orange);
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 12px;
+            margin-bottom: 6px;
+        }
+
         .card { background: var(--card-bg); padding: 20px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid var(--border); }
         .border-blue { border-left: 5px solid var(--logo-blue); }
         .border-orange { border-left: 5px solid var(--logo-orange); }
@@ -83,12 +146,10 @@
         .checkbox-group { max-height: 200px; overflow-y: auto; border: 1px solid var(--border); padding: 10px; border-radius: 4px; background: #fafafa; }
         .checkbox-item { display: flex; align-items: center; margin-bottom: 8px; }
         .checkbox-item input { margin-right: 10px; }
-        .btn-group { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        button.main-btn { padding: 14px 10px; border: none; border-radius: 4px; font-size: 13px; font-weight: bold; cursor: pointer; transition: 0.2s; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .btn-group { display: grid; grid-template-columns: 1fr 2fr; gap: 10px; margin-bottom: 20px; }
+        button.main-btn { padding: 14px 10px; border: none; border-radius: 4px; font-size: 14px; font-weight: bold; cursor: pointer; transition: 0.2s; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .btn-blue { background-color: var(--logo-blue); }
         .btn-blue:hover { background-color: #003d82; }
-        .btn-orange { background-color: var(--logo-orange); }
-        .btn-orange:hover { background-color: #d46500; }
         .btn-green { background-color: var(--logo-green); }
         .btn-green:hover { background-color: #008040; }
         #previewArea { background: #e9ecef; padding: 15px; border-radius: 4px; white-space: pre-wrap; font-family: monospace; font-size: 13px; display: none; margin-bottom: 15px; border: 1px dashed #adb5bd; }
@@ -103,7 +164,7 @@
         <img src="logo.png" alt="Logo Força Sul" class="brand-logo" onerror="this.style.display='none'">
         <div class="header-text">
             <h1>RDO - Consórcio Força Sul</h1>
-            <p>Relatório Diário de Obra - Controle Operacional</p>
+            <p>Relatório Diário de Obra - Check-in & Check-out Operacional</p>
         </div>
     </div>
 
@@ -116,10 +177,28 @@
         <button onclick="saveAdmin()" style="padding: 8px 15px; background: var(--logo-blue); color: white; border: none; border-radius: 4px; cursor: pointer;">Salvar</button>
     </div>
 
-    <form id="rdoForm" onsubmit="event.preventDefault();">
+    <!-- Alternador de Modo -->
+    <div class="mode-switcher">
+        <button type="button" id="btnModoCheckin" class="mode-btn active-checkin" onclick="alterarModo('CHECK-IN')">
+            🟢 1. CHECK-IN (Início)
+        </button>
+        <button type="button" id="btnModoCheckout" class="mode-btn" onclick="alterarModo('CHECK-OUT')">
+            🟠 2. CHECK-OUT (Encerrar)
+        </button>
+    </div>
+        <input type="hidden" id="idServicoAtual" value="">
+
+        <div id="bannerEdicaoCheckout" class="card border-blue hidden" style="background: #eef6ff;">
+            <strong style="color: var(--logo-blue);">✏️ Editando / Encerrando RDO #<span id="labelIdRdo"></span></strong>
+            <p style="margin: 5px 0 0 0; font-size: 12px; color: #444;">Confira os dados do Check-in abaixo (você pode editar colaboradores ou textos se houve alteração) e preencha os campos finais.</p>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- BLOCO 1: CAMPOS OBRIGATÓRIOS NO CHECK-IN   -->
+        <!-- ========================================== -->
         <div class="card border-blue">
             <h3>Data do Relatório <span>*</span></h3>
-            <div class="tip-box">💡 Selecione a data de execução. Os colaboradores já escalados neste dia sairão da lista automaticamente.</div>
+            <div class="tip-box">💡 Selecione a data de execução.</div>
             <input type="date" id="dataRelatorio" onchange="renderizarColaboradoresDisponiveis()" required>
         </div>
 
@@ -141,6 +220,7 @@
                 <option value="">Escolher</option>
             </select>
         </div>
+
         <div class="card border-blue">
             <h3>Usina <span>*</span></h3>
             <div class="tip-box">💡 Marque a unidade fabril/operacional onde a frente está alocada.</div>
@@ -151,7 +231,7 @@
 
         <div class="card border-blue">
             <h3>Subárea <span>*</span></h3>
-            <div class="tip-box">💡 Especifique o local exato ou subsetor da atividade dentro da Usina.</div>
+            <div class="tip-box">💡 Indique o setor específico dentro da usina.</div>
             <select id="subarea" required>
                 <option value="">Escolher</option>
             </select>
@@ -159,37 +239,19 @@
 
         <div class="card border-blue">
             <h3>Fiscal <span>*</span></h3>
-            <div class="tip-box">💡 Informe o fiscal do cliente/consórcio mapeado para validação.</div>
+            <div class="tip-box">💡 Selecione o fiscal responsável pelo acompanhamento.</div>
             <select id="fiscal" required>
-                <option value="">Escolher</option>
-            </select>
-        </div>
-        
-        <div class="card border-blue">
-            <h3>Projeto <span>*</span></h3>
-            <div class="tip-box">💡 Selecione o projeto ou contrato correspondente a esta atividade.</div>
-            <select id="projeto" required>
                 <option value="">Escolher</option>
             </select>
         </div>
 
         <div class="card border-blue">
             <h3>Colaboradores <span>*</span></h3>
-            <div class="tip-box">💡 Selecione todos os profissionais disponíveis para esta data.</div>
+            <div class="tip-box">💡 Selecione todos os profissionais alocados nesta frente. No Check-out você pode remover quem saiu ou incluir novos disponíveis.</div>
             <div id="colaboradores-selecionados" class="selected-chips"></div>
             <div class="checkbox-group" id="container-colaboradores">
                 <div style="color:#666;font-size:12px;">Selecione a data do relatório primeiro...</div>
             </div>
-        </div>
-
-        <div class="card border-orange">
-            <h3>HH ou PRODUÇÃO <span>*</span></h3>
-            <div class="tip-box">💡 Defina se a métrica de faturamento/apontamento será por Homem-Hora ou Produção.</div>
-            <select id="hhProducao" required>
-                <option value="">Escolher</option>
-                <option value="HH">HH</option>
-                <option value="PRODUÇÃO">PRODUÇÃO</option>
-            </select>
         </div>
 
         <div class="card border-orange">
@@ -200,20 +262,8 @@
 
         <div class="card border-orange">
             <h3>Atividade <span>*</span></h3>
-            <div class="tip-box">💡 Descreva de forma técnica e resumida o progresso físico realizado no dia.</div>
+            <div class="tip-box">💡 Descreva de forma técnica e resumida a atividade programada / executada.</div>
             <textarea id="atividade" rows="3" placeholder="Ex: Escavação mecânica de valas para rede interna..." required></textarea>
-        </div>
-
-        <div class="card border-orange">
-            <h3>Desvios <span>*</span></h3>
-            <div class="tip-box">💡 Registre qualquer anomalia de segurança, SSMA ou técnica. Se não houver, digite "Nenhum".</div>
-            <input type="text" id="desvios" placeholder="Digite o desvio ou escreva 'Nenhum'" required>
-        </div>
-
-        <div class="card border-orange">
-            <h3>Fotos da Atividade <span>*</span></h3>
-            <div class="tip-box">💡 Faça o upload dos registros fotográficos obrigatórios (Selecione até 10 fotos).</div>
-            <input type="file" id="fotos" required multiple accept="image/*">
         </div>
 
         <div class="card border-orange">
@@ -222,42 +272,79 @@
             <input type="text" id="impactos" placeholder="Digite os impactos identificados ou escreva 'Nenhum'" required>
         </div>
 
-        <div class="card border-green">
-            <h3>9. Status da Atividade <span>*</span></h3>
-            <div class="tip-box">💡 Indique a condição real de encerramento da meta diária desta atividade.</div>
-            <select id="statusAtividade" required>
-                <option value="Concluída">Concluída</option>
-                <option value="Parcialmente Concluída">Parcialmente Concluída</option>
-                <option value="Em Andamento">Em Andamento</option>
-                <option value="Pendente">Pendente</option>
-            </select>
-        </div>
+        <!-- ========================================== -->
+        <!-- BLOCO 2: CAMPOS EXCLUSIVOS DO CHECK-OUT    -->
+        <!-- ========================================== -->
+        <div id="camposExclusivosCheckout" class="hidden">
+            <div class="card border-blue">
+                <h3>Projeto <span>*</span></h3>
+                <div class="tip-box">💡 Selecione o projeto vinculado a esta frente de serviço.</div>
+                <select id="projeto">
+                    <option value="">Escolher</option>
+                </select>
+            </div>
 
-        <div class="card border-green">
-            <h3>10. Materiais Pendentes</h3>
-            <div class="tip-box">💡 Liste insumos ou materiais críticos faltantes. Se não houver pendências, digite "Nenhum".</div>
-            <textarea id="materiaisPendentes" rows="3" placeholder="Escreva o material pendente ou digite 'Nenhum'"></textarea>
-        </div>
+            <div class="card border-orange">
+                <h3>HH ou PRODUÇÃO <span>*</span></h3>
+                <div class="tip-box">💡 Defina se a métrica de faturamento/apontamento será por Homem-Hora ou Produção.</div>
+                <select id="hhProducao">
+                    <option value="">Escolher</option>
+                    <option value="HH">HH</option>
+                    <option value="PRODUÇÃO">PRODUÇÃO</option>
+                </select>
+            </div>
 
-        <div class="card border-green">
-            <h3>11. Observações</h3>
-            <div class="tip-box">💡 Espaço livre para adicionar qualquer comentário extra ou histórico relevante sobre o dia ou digite 'Nenhuma'.</div>
-            <textarea id="observacoes" rows="3" placeholder="Informações adicionais livres ou digite 'Nenhuma'"></textarea>
+            <div class="card border-orange">
+                <h3>Desvios <span>*</span></h3>
+                <div class="tip-box">💡 Registre qualquer anomalia de segurança, SSMA ou técnica. Se não houver, digite "Nenhum".</div>
+                <input type="text" id="desvios" placeholder="Digite o desvio ou escreva 'Nenhum'">
+            </div>
+
+            <div class="card border-orange">
+                <h3>Fotos da Atividade <span>*</span></h3>
+                <div class="tip-box">💡 Faça o upload dos registros fotográficos obrigatórios do encerramento (Selecione até 10 fotos).</div>
+                <input type="file" id="fotos" multiple accept="image/*">
+            </div>
+
+            <div class="card border-green">
+                <h3>Status da Atividade <span>*</span></h3>
+                <div class="tip-box">💡 Indique a condição real de encerramento da meta diária desta atividade.</div>
+                <select id="statusAtividade">
+                    <option value="Concluída">Concluída</option>
+                    <option value="Parcialmente Concluída">Parcialmente Concluída</option>
+                    <option value="Em Andamento">Em Andamento</option>
+                    <option value="Pendente">Pendente</option>
+                </select>
+            </div>
+
+            <div class="card border-green">
+                <h3>Materiais Pendentes</h3>
+                <div class="tip-box">💡 Liste insumos ou materiais críticos faltantes. Se não houver pendências, digite "Nenhum".</div>
+                <textarea id="materiaisPendentes" rows="3" placeholder="Escreva o material pendente ou digite 'Nenhum'"></textarea>
+            </div>
+
+            <div class="card border-green">
+                <h3>Observações</h3>
+                <div class="tip-box">💡 Espaço livre para adicionar qualquer comentário extra ou histórico relevante sobre o dia ou digite 'Nenhuma'.</div>
+                <textarea id="observacoes" rows="3" placeholder="Informações adicionais livres ou digite 'Nenhuma'"></textarea>
+            </div>
         </div>
 
         <div id="previewArea"></div>
 
         <div class="btn-group">
-            <button type="button" class="main-btn btn-blue" onclick="forçarMensagemManual()">📋 Montar Msg</button>
-            <button type="button" class="main-btn btn-orange" onclick="alert('Use o botão verde de WhatsApp! Ele já salva na planilha automaticamente.')">💾 Salvar Planilha</button>
-            <button type="button" class="main-btn btn-green" onclick="enviarGrupo()">🟢 WhatsApp / Enviar</button>
+            <button type="button" class="main-btn btn-blue" onclick="forcarMensagemManual()">📋 Montar Msg</button>
+            <button type="button" id="btnEnviarPrincipal" class="main-btn btn-green" onclick="enviarGrupo()">🟢 Enviar Check-in / WhatsApp</button>
         </div>
     </form>
 </div>
+
 <script>
-    let msgPronta = "";
+    let modoAtual = "CHECK-IN"; // "CHECK-IN" ou "CHECK-OUT"
     let listaTodosColaboradores = [];
-    let ocupadosPorData = {}; // Formato esperado: { "2026-11-20": ["João", "Maria"] }
+    let ocupadosPorData = {};
+    let rdosAbertos = [];
+    let colabsDoRdoEmEdicao = [];
 
     window.onload = function() {
         const urlParams = new URLSearchParams(window.location.search);
@@ -273,8 +360,8 @@
             document.getElementById('whatsappLink').value = localStorage.getItem('whatsappLink');
         }
 
-        // Define a data de hoje por padrão
         definirDataHoje();
+        aplicarRegrasDeModo();
         carregarDadosPlanilha();
     };
 
@@ -289,6 +376,63 @@
         }
     }
 
+    function alterarModo(novoModo) {
+        modoAtual = novoModo;
+        colabsDoRdoEmEdicao = [];
+        document.getElementById('idServicoAtual').value = "";
+        document.getElementById('rdoForm').reset();
+        document.getElementById('colaboradores-selecionados').innerHTML = "";
+        document.getElementById('previewArea').style.display = "none";
+        document.getElementById('bannerEdicaoCheckout').classList.add('hidden');
+        definirDataHoje();
+        aplicarRegrasDeModo();
+        renderizarColaboradoresDisponiveis();
+
+        if (modoAtual === "CHECK-OUT") {
+            listarRdosDoLider();
+        }
+    }
+
+    function aplicarRegrasDeModo() {
+        const btnCheckin = document.getElementById('btnModoCheckin');
+        const btnCheckout = document.getElementById('btnModoCheckout');
+        const painelSelecao = document.getElementById('painelSelecaoCheckout');
+        const camposCheckout = document.getElementById('camposExclusivosCheckout');
+        const form = document.getElementById('rdoForm');
+        const btnEnviar = document.getElementById('btnEnviarPrincipal');
+
+        const idsCheckout = ['projeto', 'hhProducao', 'desvios', 'fotos'];
+
+        if (modoAtual === "CHECK-IN") {
+            btnCheckin.classList.add('active-checkin');
+            btnCheckout.classList.remove('active-checkout');
+            painelSelecao.classList.add('hidden');
+            camposCheckout.classList.add('hidden');
+            form.classList.remove('hidden');
+            btnEnviar.innerHTML = "🟢 Enviar Check-in / WhatsApp";
+
+            idsCheckout.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.required = false;
+            });
+        } else {
+            btnCheckout.classList.add('active-checkout');
+            btnCheckin.classList.remove('active-checkin');
+            painelSelecao.classList.remove('hidden');
+            camposCheckout.classList.remove('hidden');
+            btnEnviar.innerHTML = "🟠 Finalizar Check-out / WhatsApp";
+
+            if (!document.getElementById('idServicoAtual').value) {
+                form.classList.add('hidden');
+            }
+
+            idsCheckout.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.required = true;
+            });
+        }
+    }
+
     function carregarDadosPlanilha() {
         const urlPlanilha = document.getElementById('scriptUrl').value;
         if (!urlPlanilha) return;
@@ -297,6 +441,7 @@
         .then(res => res.json())
         .then(dados => {
             preencherDropdown('lider', dados.lideres);
+            preencherDropdown('filtroLiderCheckout', dados.lideres, "Selecione seu nome...");
             preencherDropdown('usina', dados.usinas);
             preencherDropdown('subarea', dados.subareas);
             preencherDropdown('fiscal', dados.fiscais);
@@ -304,12 +449,87 @@
 
             listaTodosColaboradores = dados.colaboradores || [];
             ocupadosPorData = dados.ocupadosPorData || {};
+            rdosAbertos = dados.rdosAbertos || [];
 
             renderizarColaboradoresDisponiveis();
+            if (modoAtual === "CHECK-OUT") {
+                listarRdosDoLider();
+            }
         })
         .catch(err => console.error("Erro ao carregar banco de dados: " + err));
     }
-    function renderizarColaboradoresDisponiveis() {
+
+    function listarRdosDoLider() {
+        const liderSelecionado = document.getElementById('filtroLiderCheckout').value;
+        const containerLista = document.getElementById('listaRdosLider');
+        containerLista.innerHTML = "";
+
+        if (!liderSelecionado) {
+            containerLista.innerHTML = "<div style='color:#666;font-size:13px;'>Escolha seu nome acima para listar seus RDOs pendentes de Check-out.</div>";
+            return;
+        }
+
+        const meusRdos = rdosAbertos.filter(r => r.lider.trim().toLowerCase() === liderSelecionado.trim().toLowerCase());
+
+        if (meusRdos.length === 0) {
+            containerLista.innerHTML = `<div style='color:#006633;background:#e6f7ed;padding:12px;border-radius:6px;font-size:13px;'>✅ Nenhum RDO pendente de Check-out para <b>${liderSelecionado}</b>!</div>`;
+            return;
+        }
+
+        meusRdos.forEach(rdo => {
+            const [ano, mes, dia] = rdo.dataRelatorio ? rdo.dataRelatorio.split('-') : ["", "", ""];
+            const dataBr = dia ? `${dia}/${mes}/${ano}` : rdo.dataRelatorio;
+
+            const div = document.createElement('div');
+            div.className = 'rdo-pendente-card';
+            div.id = `card-rdo-${rdo.id}`;
+            div.innerHTML = `
+                <span class="rdo-badge">RDO #${rdo.id} • ${dataBr}</span>
+                <div style="font-size:14px;font-weight:bold;color:#111;">${rdo.usina} — ${rdo.subarea} (${rdo.disciplina})</div>
+                <div style="font-size:12px;color:#555;margin-top:4px;"><b>Atividade:</b> ${rdo.atividade}</div>
+                <div style="font-size:12px;color:#555;margin-top:2px;"><b>Equipe:</b> ${rdo.colaboradores}</div>
+                <div style="font-size:11px;color:var(--logo-blue);font-weight:bold;margin-top:6px;">👉 Clique aqui para conferir e fazer Check-out</div>
+            `;
+            div.onclick = () => selecionarRdoParaCheckout(rdo);
+            containerLista.appendChild(div);
+        });
+    }
+
+    function selecionarRdoParaCheckout(rdo) {
+        document.querySelectorAll('.rdo-pendente-card').forEach(c => c.classList.remove('selected'));
+        const cardAtivo = document.getElementById(`card-rdo-${rdo.id}`);
+        if (cardAtivo) cardAtivo.classList.add('selected');
+
+        document.getElementById('idServicoAtual').value = rdo.id;
+        document.getElementById('labelIdRdo').innerText = rdo.id;
+        document.getElementById('bannerEdicaoCheckout').classList.remove('hidden');
+        document.getElementById('rdoForm').classList.remove('hidden');
+
+        document.getElementById('dataRelatorio').value = rdo.dataRelatorio;
+        document.getElementById('disciplina').value = rdo.disciplina;
+        document.getElementById('lider').value = rdo.lider;
+        document.getElementById('usina').value = rdo.usina;
+        document.getElementById('subarea').value = rdo.subarea;
+        document.getElementById('fiscal').value = rdo.fiscal;
+        document.getElementById('equipamento').value = rdo.equipamento;
+        document.getElementById('atividade').value = rdo.atividade;
+        document.getElementById('impactos').value = rdo.impactos;
+
+        if (rdo.projeto) document.getElementById('projeto').value = rdo.projeto;
+        if (rdo.hhProducao) document.getElementById('hhProducao').value = rdo.hhProducao;
+        if (rdo.desvios) document.getElementById('desvios').value = rdo.desvios;
+        if (rdo.statusAtividade) document.getElementById('statusAtividade').value = rdo.statusAtividade;
+        if (rdo.materialsPendentes) document.getElementById('materiaisPendentes').value = rdo.materialsPendentes;
+        if (rdo.observacoes) document.getElementById('observacoes').value = rdo.observacoes;
+
+        colabsDoRdoEmEdicao = rdo.colaboradores
+            ? rdo.colaboradores.split(',').map(n => n.trim()).filter(n => n !== "")
+            : [];
+
+        renderizarColaboradoresDisponiveis(colabsDoRdoEmEdicao);
+        document.getElementById('rdoForm').scrollIntoView({ behavior: 'smooth' });
+    }
+    function renderizarColaboradoresDisponiveis(preSelecionados = []) {
         const containerColab = document.getElementById('container-colaboradores');
         const containerChips = document.getElementById('colaboradores-selecionados');
         const dataSelecionada = document.getElementById('dataRelatorio').value;
@@ -327,7 +547,13 @@
             return;
         }
 
-        const ocupadosHoje = (ocupadosPorData[dataSelecionada] || []).map(n => n.trim().toLowerCase());
+        const nomesEdicaoLower = (colabsDoRdoEmEdicao || []).map(n => n.trim().toLowerCase());
+        const preSelLower = (preSelecionados || []).map(n => n.trim().toLowerCase());
+
+        const ocupadosHoje = (ocupadosPorData[dataSelecionada] || [])
+            .map(n => n.trim().toLowerCase())
+            .filter(n => !nomesEdicaoLower.includes(n));
+
         const disponiveis = listaTodosColaboradores.filter(nome => !ocupadosHoje.includes(nome.trim().toLowerCase()));
 
         if (disponiveis.length === 0) {
@@ -336,11 +562,14 @@
         }
 
         disponiveis.forEach(nome => {
+            const deveMarcar = preSelLower.includes(nome.trim().toLowerCase());
             const item = document.createElement('div');
             item.className = 'checkbox-item';
-            item.innerHTML = `<label style="display:flex;align-items:center;cursor:pointer;width:100%;"><input type="checkbox" name="colab" value="${nome}" onchange="atualizarChipsColaboradores()"> ${nome}</label>`;
+            item.innerHTML = `<label style="display:flex;align-items:center;cursor:pointer;width:100%;"><input type="checkbox" name="colab" value="${nome}" ${deveMarcar ? 'checked' : ''} onchange="atualizarChipsColaboradores()"> ${nome}</label>`;
             containerColab.appendChild(item);
         });
+
+        atualizarChipsColaboradores();
     }
 
     function atualizarChipsColaboradores() {
@@ -365,9 +594,10 @@
         atualizarChipsColaboradores();
     }
 
-    function preencherDropdown(id, lista) {
+    function preencherDropdown(id, lista, textoPadrao = "Escolher") {
         const select = document.getElementById(id);
-        select.length = 1; 
+        if (!select) return;
+        select.innerHTML = `<option value="">${textoPadrao}</option>`;
         if (lista) {
             lista.forEach(item => {
                 const opt = document.createElement('option');
@@ -376,6 +606,7 @@
             });
         }
     }
+
     function obterDados(callback) {
         let colabs = [];
         document.querySelectorAll('input[name="colab"]:checked').forEach(function(cb) { colabs.push(cb.value); });
@@ -386,25 +617,32 @@
         }
 
         let dados = {
+            modo: modoAtual,
+            idServico: document.getElementById('idServicoAtual').value,
             dataRelatorio: document.getElementById('dataRelatorio').value,
             disciplina: document.getElementById('disciplina').value,
             lider: document.getElementById('lider').value,
             usina: document.getElementById('usina').value,
             subarea: document.getElementById('subarea').value,
             fiscal: document.getElementById('fiscal').value,
-            projeto: document.getElementById('projeto').value,
+            projeto: document.getElementById('projeto').value || "",
             colaboradores: colabs.join(', '),
             colaboradoresArray: colabs,
-            hhProducao: document.getElementById('hhProducao').value,
+            hhProducao: document.getElementById('hhProducao').value || "",
             equipamento: document.getElementById('equipamento').value,
             atividade: document.getElementById('atividade').value,
-            desvios: document.getElementById('desvios').value,
+            desvios: document.getElementById('desvios').value || "",
             impactos: document.getElementById('impactos').value,
-            statusAtividade: document.getElementById('statusAtividade').value,
+            statusAtividade: document.getElementById('statusAtividade').value || "Em Andamento",
             materialsPendentes: document.getElementById('materiaisPendentes').value || "Nenhum",
             observacoes: document.getElementById('observacoes').value || "Nenhuma",
             fotos: [] 
         };
+
+        if (modoAtual === "CHECK-IN") {
+            callback(dados);
+            return;
+        }
 
         const fotoInput = document.getElementById('fotos');
         const arquivos = fotoInput ? fotoInput.files : [];
@@ -444,7 +682,7 @@
                         ctx.drawImage(img, 0, 0, larguraOrig, alturaOrig);
                         
                         let base64Comprimido = canvas.toDataURL('image/jpeg', 0.7);
-                        let fragmentos = base64Comprimido.split(',')[1];
+                        let fragmentos = base64Comprimido.split(',');
                         
                         resolve({
                             base64: fragmentos, 
@@ -463,26 +701,43 @@
             callback(dados);
         });
     }
-
     function gerarTextoRDO(d) {
-        let msgPronta = " *RDO - CONSÓRCIO FORÇA SUL*\n\n";
+        let msgPronta = "";
+        let dataFormatada = "";
         if (d.dataRelatorio) {
             const [ano, mes, dia] = d.dataRelatorio.split('-');
-            msgPronta += `📅 *Data do Relatório:* ${dia}/${mes}/${ano}\n`;
+            dataFormatada = `${dia}/${mes}/${ano}`;
         }
-        msgPronta += `⚙️ *Disciplina:* ${d.disciplina}\n`;
-        msgPronta += `👤 *Líder:* ${d.lider}\n`;
-        msgPronta += `🏢 *Usina:* ${d.usina} | *Subárea:* ${d.subarea}\n`;
-        msgPronta += `🕵️‍♂️ *Fiscal:* ${d.fiscal}\n\n`;
-        msgPronta += `📁 *Projeto:* ${d.projeto}\n`;
-        msgPronta += `👥 *Equipe:* ${d.colaboradores || 'Nenhuma'}\n\n`;
-        msgPronta += `📊 *Tipo:* ${d.hhProducao} | 🚜 *Equipamento:* ${d.equipamento}\n`;
-        msgPronta += `📝 *Atividade:* ${d.atividade}\n`;
-        msgPronta += `⚠️ *Desvios:* ${d.desvios}\n`;
-        msgPronta += `🛑 *Impactos M.O:* ${d.impactos}\n\n`;
-        msgPronta += `📌 *Status:* ${d.statusAtividade}\n`;
-        msgPronta += `📦 *Materiais Pendentes:* ${d.materialsPendentes}\n`;
-        msgPronta += `🔍 *Obs:* ${d.observacoes}\n\n`;
+
+        if (d.modo === "CHECK-IN") {
+            msgPronta = "🟢 *CHECK-IN RDO - CONSÓRCIO FORÇA SUL*\n\n";
+            msgPronta += `📅 *Data:* ${dataFormatada}\n`;
+            msgPronta += `⚙️ *Disciplina:* ${d.disciplina}\n`;
+            msgPronta += `👤 *Líder:* ${d.lider}\n`;
+            msgPronta += `🏢 *Usina:* ${d.usina} | *Subárea:* ${d.subarea}\n`;
+            msgPronta += `🕵️‍♂️ *Fiscal:* ${d.fiscal}\n\n`;
+            msgPronta += `👥 *Equipe:* ${d.colaboradores}\n`;
+            msgPronta += `🚜 *Equipamento:* ${d.equipamento}\n`;
+            msgPronta += `📝 *Atividade Programada:* ${d.atividade}\n`;
+            msgPronta += `🛑 *Impactos M.O:* ${d.impactos}\n`;
+        } else {
+            msgPronta = "🟠 *CHECK-OUT RDO - CONSÓRCIO FORÇA SUL*\n\n";
+            if (d.idServico) msgPronta += `🆔 *RDO Nº:* ${d.idServico}\n`;
+            msgPronta += `📅 *Data do Relatório:* ${dataFormatada}\n`;
+            msgPronta += `⚙️ *Disciplina:* ${d.disciplina}\n`;
+            msgPronta += `👤 *Líder:* ${d.lider}\n`;
+            msgPronta += `🏢 *Usina:* ${d.usina} | *Subárea:* ${d.subarea}\n`;
+            msgPronta += `🕵️‍♂️ *Fiscal:* ${d.fiscal}\n\n`;
+            msgPronta += `📁 *Projeto:* ${d.projeto}\n`;
+            msgPronta += `👥 *Equipe:* ${d.colaboradores}\n\n`;
+            msgPronta += `📊 *Tipo:* ${d.hhProducao} | 🚜 *Equipamento:* ${d.equipamento}\n`;
+            msgPronta += `📝 *Atividade:* ${d.atividade}\n`;
+            msgPronta += `⚠️ *Desvios:* ${d.desvios}\n`;
+            msgPronta += `🛑 *Impactos M.O:* ${d.impactos}\n\n`;
+            msgPronta += `📌 *Status:* ${d.statusAtividade}\n`;
+            msgPronta += `📦 *Materiais Pendentes:* ${d.materialsPendentes}\n`;
+            msgPronta += `🔍 *Obs:* ${d.observacoes}\n`;
+        }
 
         const preview = document.getElementById('previewArea');
         if (preview) {
@@ -492,40 +747,48 @@
         navigator.clipboard.writeText(msgPronta);
     }
 
-    function forçarMensagemManual() {
+    function forcarMensagemManual() {
         const form = document.getElementById('rdoForm');
         if(!form.checkValidity()) { alert("Preencha os campos obrigatórios!"); form.reportValidity(); return; }
         obterDados(function(dados) {
             gerarTextoRDO(dados);
-            alert("Mensagem estruturada e copiada!");
+            alert("Comprovante estruturado e copiado!");
         });
     }
 
     function resetarBotaoVerde() {
-        const botaoVerde = document.querySelector('.btn-green');
+        const botaoVerde = document.getElementById('btnEnviarPrincipal');
         if (botaoVerde) {
             botaoVerde.disabled = false;
             botaoVerde.style.opacity = "1";
             botaoVerde.style.cursor = "pointer";
-            botaoVerde.innerHTML = "🟢 WhatsApp / Enviar";
+            botaoVerde.innerHTML = modoAtual === "CHECK-IN" 
+                ? "🟢 Enviar Check-in / WhatsApp" 
+                : "🟠 Finalizar Check-out / WhatsApp";
         }
     }
 
-        function enviarGrupo() {
+    function enviarGrupo() {
         const form = document.getElementById('rdoForm');
         if(!form.checkValidity()) { alert("Preencha todos os campos obrigatórios!"); form.reportValidity(); return; }
 
-        const botaoVerde = document.querySelector('.btn-green');
+        if (modoAtual === "CHECK-OUT" && !document.getElementById('idServicoAtual').value) {
+            alert("⚠️ Selecione primeiro qual RDO pendente você deseja encerrar!");
+            return;
+        }
+
+        const botaoVerde = document.getElementById('btnEnviarPrincipal');
         if (botaoVerde.disabled || botaoVerde.innerHTML.includes("⏳")) return;
 
         const urlPlanilha = document.getElementById('scriptUrl').value;
         const linkWhatsapp = document.getElementById('whatsappLink').value || "https://whatsapp.com";
 
-        // 1. Ativa a ampulheta imediatamente ao clicar
         botaoVerde.disabled = true;
         botaoVerde.style.opacity = "0.5";
         botaoVerde.style.cursor = "not-allowed";
-        botaoVerde.innerHTML = "⏳ Enviando Dados e Fotos...";
+        botaoVerde.innerHTML = modoAtual === "CHECK-IN" 
+            ? "⏳ Registrando Check-in..." 
+            : "⏳ Salvando Check-out e Fotos...";
 
         obterDados(function(dados) {
             if (!dados) {
@@ -535,30 +798,51 @@
 
             gerarTextoRDO(dados);
 
-            // Bloqueia localmente na hora para a data enviada
-            if (!ocupadosPorData[dados.dataRelatorio]) {
-                ocupadosPorData[dados.dataRelatorio] = [];
-            }
-            ocupadosPorData[dados.dataRelatorio].push(...dados.colaboradoresArray);
-
             const finalizarELimpar = function() {
-                // 3. Mostra o aviso SOMENTE após terminar de carregar/salvar
-                alert("Formulário RDO enviado com sucesso!\n\nO relatório foi copiado. Clique em OK para ir ao WhatsApp.");
-                
-                // 4. Faz o reboot limpando a página logo após clicar em OK
-                form.reset(); 
+                const msgSucesso = modoAtual === "CHECK-IN"
+                    ? "Check-in registrado com sucesso!\n\nO comprovante foi copiado. Clique em OK para abrir o WhatsApp."
+                    : `Check-out do RDO #${dados.idServico} concluído com sucesso!\n\nO RDO completo foi copiado. Clique em OK para abrir o WhatsApp.`;
+
+                alert(msgSucesso);
+
+                if (modoAtual === "CHECK-IN") {
+                    if (!ocupadosPorData[dados.dataRelatorio]) {
+                        ocupadosPorData[dados.dataRelatorio] = [];
+                    }
+                    ocupadosPorData[dados.dataRelatorio].push(...dados.colaboradoresArray);
+                    carregarDadosPlanilha();
+                } else {
+                    rdosAbertos = rdosAbertos.filter(r => String(r.id) !== String(dados.idServico));
+                    if (ocupadosPorData[dados.dataRelatorio]) {
+                        const removidos = colabsDoRdoEmEdicao.map(n => n.toLowerCase());
+                        ocupadosPorData[dados.dataRelatorio] = ocupadosPorData[dados.dataRelatorio]
+                            .filter(n => !removidos.includes(n.toLowerCase()));
+                        ocupadosPorData[dados.dataRelatorio].push(...dados.colaboradoresArray);
+                    }
+                }
+
+                form.reset();
+                document.getElementById('idServicoAtual').value = "";
+                document.getElementById('bannerEdicaoCheckout').classList.add('hidden');
+                colabsDoRdoEmEdicao = [];
+
                 const containerChips = document.getElementById('colaboradores-selecionados');
                 if (containerChips) containerChips.innerHTML = "";
                 const preview = document.getElementById('previewArea');
                 if (preview) preview.style.display = "none";
-                
+
                 definirDataHoje();
+                aplicarRegrasDeModo();
                 renderizarColaboradoresDisponiveis();
+
+                if (modoAtual === "CHECK-OUT") {
+                    listarRdosDoLider();
+                }
+
                 resetarBotaoVerde();
                 window.open(linkWhatsapp, '_blank');
             };
 
-            // 2. Envia os dados e fotos para a planilha enquanto a ampulheta gira
             if(urlPlanilha) {
                 fetch(urlPlanilha, {
                     method: "POST",
