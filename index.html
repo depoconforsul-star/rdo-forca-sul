@@ -62,8 +62,6 @@
             cursor: pointer; font-size: 11px; font-weight: bold; transition: 0.2s;
         }
         .admin-btn:hover { background: var(--logo-orange); }
-
-        /* Seletor de Modo Check-in / Check-out */
         .mode-switcher {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -92,8 +90,6 @@
             color: white;
             border-color: #c75f00;
         }
-
-        /* Cards de seleção de RDO pendente */
         .rdo-pendente-card {
             border: 1px solid var(--border);
             border-left: 5px solid var(--logo-orange);
@@ -124,7 +120,6 @@
             border-radius: 12px;
             margin-bottom: 6px;
         }
-
         .card { background: var(--card-bg); padding: 20px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid var(--border); }
         .border-blue { border-left: 5px solid var(--logo-blue); }
         .border-orange { border-left: 5px solid var(--logo-orange); }
@@ -177,7 +172,6 @@
         <button onclick="saveAdmin()" style="padding: 8px 15px; background: var(--logo-blue); color: white; border: none; border-radius: 4px; cursor: pointer;">Salvar</button>
     </div>
 
-    <!-- Alternador de Modo -->
     <div class="mode-switcher">
         <button type="button" id="btnModoCheckin" class="mode-btn active-checkin" onclick="alterarModo('CHECK-IN')">
             🟢 1. CHECK-IN (Início)
@@ -186,6 +180,17 @@
             🟠 2. CHECK-OUT (Encerrar)
         </button>
     </div>
+
+    <div id="painelSelecaoCheckout" class="card border-orange hidden">
+        <h3>Selecione seu Nome para Encerrar RDO <span>*</span></h3>
+        <div class="tip-box">💡 Escolha o Líder/Encarregado para visualizar os RDOs pendentes de check-out.</div>
+        <select id="filtroLiderCheckout" onchange="listarRdosDoLider()">
+            <option value="">Carregando líderes...</option>
+        </select>
+        <div id="listaRdosLider" style="margin-top: 15px;"></div>
+    </div>
+
+    <form id="rdoForm" onsubmit="event.preventDefault();">
         <input type="hidden" id="idServicoAtual" value="">
 
         <div id="bannerEdicaoCheckout" class="card border-blue hidden" style="background: #eef6ff;">
@@ -193,9 +198,6 @@
             <p style="margin: 5px 0 0 0; font-size: 12px; color: #444;">Confira os dados do Check-in abaixo (você pode editar colaboradores ou textos se houve alteração) e preencha os campos finais.</p>
         </div>
 
-        <!-- ========================================== -->
-        <!-- BLOCO 1: CAMPOS OBRIGATÓRIOS NO CHECK-IN   -->
-        <!-- ========================================== -->
         <div class="card border-blue">
             <h3>Data do Relatório <span>*</span></h3>
             <div class="tip-box">💡 Selecione a data de execução.</div>
@@ -272,9 +274,6 @@
             <input type="text" id="impactos" placeholder="Digite os impactos identificados ou escreva 'Nenhum'" required>
         </div>
 
-        <!-- ========================================== -->
-        <!-- BLOCO 2: CAMPOS EXCLUSIVOS DO CHECK-OUT    -->
-        <!-- ========================================== -->
         <div id="camposExclusivosCheckout" class="hidden">
             <div class="card border-blue">
                 <h3>Projeto <span>*</span></h3>
@@ -338,9 +337,10 @@
         </div>
     </form>
 </div>
-
 <script>
-    let modoAtual = "CHECK-IN"; // "CHECK-IN" ou "CHECK-OUT"
+    const URL_SCRIPT_PADRAO = "COLE_AQUI_SUA_URL_DO_SCRIPT_EXEC";
+
+    let modoAtual = "CHECK-IN";
     let listaTodosColaboradores = [];
     let ocupadosPorData = {};
     let rdosAbertos = [];
@@ -353,10 +353,12 @@
             localStorage.setItem('scriptUrl', urlDoLink);
         }
 
-        if(localStorage.getItem('scriptUrl')) {
-            document.getElementById('scriptUrl').value = localStorage.getItem('scriptUrl');
+        const urlSalva = localStorage.getItem('scriptUrl') || URL_SCRIPT_PADRAO;
+        if (urlSalva && urlSalva !== "COLE_AQUI_SUA_URL_DO_SCRIPT_EXEC") {
+            document.getElementById('scriptUrl').value = urlSalva;
         }
-        if(localStorage.getItem('whatsappLink')) {
+
+        if (localStorage.getItem('whatsappLink')) {
             document.getElementById('whatsappLink').value = localStorage.getItem('whatsappLink');
         }
 
@@ -458,7 +460,6 @@
         })
         .catch(err => console.error("Erro ao carregar banco de dados: " + err));
     }
-
     function listarRdosDoLider() {
         const liderSelecionado = document.getElementById('filtroLiderCheckout').value;
         const containerLista = document.getElementById('listaRdosLider');
@@ -529,6 +530,7 @@
         renderizarColaboradoresDisponiveis(colabsDoRdoEmEdicao);
         document.getElementById('rdoForm').scrollIntoView({ behavior: 'smooth' });
     }
+
     function renderizarColaboradoresDisponiveis(preSelecionados = []) {
         const containerColab = document.getElementById('container-colaboradores');
         const containerChips = document.getElementById('colaboradores-selecionados');
@@ -665,42 +667,38 @@
                 let reader = new FileReader();
                 reader.onloadend = function() {
                     let img = new Image();
-                    img.src = reader.result;
-                    img.onload = function() {
-                        let maxLargura = 1280; 
-                        let larguraOrig = img.width;
-                        let alturaOrig = img.height;
-                        
-                        if (larguraOrig > maxLargura) {
-                            alturaOrig = Math.round((maxLargura * alturaOrig) / larguraOrig);
-                            larguraOrig = maxLargura;
-                        }
-                        let canvas = document.createElement('canvas');
-                        canvas.width = larguraOrig;
-                        canvas.height = alturaOrig;
-                        let ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, larguraOrig, alturaOrig);
-                        
-                        let base64Comprimido = canvas.toDataURL('image/jpeg', 0.7);
-                        let fragmentos = base64Comprimido.split(',');
-                        
-                        resolve({
-                            base64: fragmentos, 
-                            nome: arquivo.name.replace(/\.[^/.]+$/, "") + ".jpg",
-                            tipo: 'image/jpeg'
-                        });
-                    };
-                };
-                reader.readAsDataURL(arquivo);
-            });
-            promessas.push(processarEComprimir);
-        }
-
-        Promise.all(promessas).then(resultadoLote => {
-            dados.fotos = resultadoLote;
-            callback(dados);
-        });
-    }
+img.src = reader.result;
+img.onload = function() {
+let maxLargura = 1280;
+let larguraOrig = img.width;
+let alturaOrig = img.height;
+if (larguraOrig > maxLargura) {
+alturaOrig = Math.round((maxLargura * alturaOrig) / larguraOrig);
+larguraOrig = maxLargura;
+}
+let canvas = document.createElement('canvas');
+canvas.width = larguraOrig;
+canvas.height = alturaOrig;
+let ctx = canvas.getContext('2d');
+ctx.drawImage(img, 0, 0, larguraOrig, alturaOrig);
+let base64Comprimido = canvas.toDataURL('image/jpeg', 0.7);
+let fragmentos = base64Comprimido.split(',').at(1);
+resolve({
+base64: fragmentos,
+nome: arquivo.name.replace(/.[^/.]+$/, "") + ".jpg",
+tipo: 'image/jpeg'
+});
+};
+};
+reader.readAsDataURL(arquivo);
+});
+promessas.push(processarEComprimir);
+}
+Promise.all(promessas).then(resultadoLote => {
+dados.fotos = resultadoLote;
+callback(dados);
+});
+}
     function gerarTextoRDO(d) {
         let msgPronta = "";
         let dataFormatada = "";
@@ -884,3 +882,4 @@
 </script>
 </body>
 </html>
+    
