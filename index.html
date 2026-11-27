@@ -448,7 +448,7 @@
         }
     }
 
-    function obterDados(callback) {
+       function obterDados(callback) {
         let colabs = [];
         if (fluxoAtivo === "IN") {
             document.querySelectorAll('input[name="colab"]:checked').forEach(cb => colabs.push(cb.value));
@@ -460,7 +460,7 @@
 
         let dados = {
             tipoOperacao: fluxoAtivo,
-            idServico: idSelecionadoCheckout,
+            idServico: fluxoAtivo === "OUT" ? idSelecionadoCheckout : null,
             dataRelatorio: document.getElementById('dataRelatorio').value,
             disciplina: document.getElementById('disciplina').value,
             lider: document.getElementById('lider').value,
@@ -471,9 +471,9 @@
             colaboradores: colabs.join(', '),
             colaboradoresArray: colabs,
             hhProducao: document.getElementById('hhProducao').value,
-            equipamento: document.getElementById('equipamento').value,
-            atividade: document.getElementById('atividade').value,
-            impactos: document.getElementById('impactos').value,
+            equipamento: document.getElementById('equipamento').value || "Nenhum",
+            atividade: document.getElementById('atividade').value || "Nenhuma",
+            impactos: document.getElementById('impactos').value || "Nenhum",
             desvios: fluxoAtivo === "OUT" ? (document.getElementById('desvios').value || "Nenhum") : "Nenhum",
             statusAtividade: fluxoAtivo === "OUT" ? document.getElementById('statusAtividade').value : "Aberto",
             materialsPendentes: fluxoAtivo === "OUT" ? (document.getElementById('materiaisPendentes').value || "Nenhum") : "Nenhum",
@@ -486,6 +486,7 @@
 
         if (arquivos.length > 10) { alert("⚠️ Limite Máximo Excedido: Máximo de 10 fotos!"); resetarBotaoVerde(); return; }
         if (arquivos.length === 0) { callback(dados); return; }
+
         let promessas = [];
         for (let i = 0; i < arquivos.length; i++) {
             let arquivo = arquivos[i];
@@ -507,14 +508,12 @@
                         let ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, larguraOrig, alturaOrig);
                         
-let base64Comprimido = canvas.toDataURL('image/jpeg', 0.7);
-resolve({
-    base64: base64Comprimido.split(',')[1],
-    nome: arquivo.name.replace(/\.[^/.]+$/, "") + ".jpg",
-    tipo: 'image/jpeg'
-});
-
-
+                        let base64Comprimido = canvas.toDataURL('image/jpeg', 0.7);
+                        resolve({
+                            base64: base64Comprimido.split(',')[1],
+                            nome: arquivo.name.replace(/\.[^/.]+$/, "") + ".jpg",
+                            tipo: 'image/jpeg'
+                        });
                     };
                 };
                 reader.readAsDataURL(arquivo);
@@ -638,3 +637,4 @@ resolve({
 </script>
 </body>
 </html>
+
