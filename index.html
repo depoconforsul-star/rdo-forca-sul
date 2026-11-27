@@ -507,12 +507,14 @@
                         let ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, larguraOrig, alturaOrig);
                         
-                        let base64Comprimido = canvas.toDataURL('image/jpeg', 0.7);
-                        resolve({
-                            base64: base64Comprimido.split(',')[1], 
-                            nome: arquivo.name.replace(/\.[^/.]+$/, "") + ".jpg",
-                            tipo: 'image/jpeg'
-                        });
+let base64Comprimido = canvas.toDataURL('image/jpeg', 0.7);
+resolve({
+    base64: base64Comprimido.split(',')[1],
+    nome: arquivo.name.replace(/\.[^/.]+$/, "") + ".jpg",
+    tipo: 'image/jpeg'
+});
+
+
                     };
                 };
                 reader.readAsDataURL(arquivo);
