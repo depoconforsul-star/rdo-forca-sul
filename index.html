@@ -660,45 +660,53 @@
             return;
         }
 
-        let promessas = [];
+              let promessas = [];
         for (let i = 0; i < arquivos.length; i++) {
             let arquivo = arquivos[i];
             let processarEComprimir = new Promise((resolve) => {
                 let reader = new FileReader();
+                reader.onerror = function() { resolve(null); };
                 reader.onloadend = function() {
                     let img = new Image();
-img.src = reader.result;
-img.onload = function() {
-let maxLargura = 1280;
-let larguraOrig = img.width;
-let alturaOrig = img.height;
-if (larguraOrig > maxLargura) {
-alturaOrig = Math.round((maxLargura * alturaOrig) / larguraOrig);
-larguraOrig = maxLargura;
-}
-let canvas = document.createElement('canvas');
-canvas.width = larguraOrig;
-canvas.height = alturaOrig;
-let ctx = canvas.getContext('2d');
-ctx.drawImage(img, 0, 0, larguraOrig, alturaOrig);
-let base64Comprimido = canvas.toDataURL('image/jpeg', 0.7);
-let fragmentos = base64Comprimido.split(',').at(1);
-resolve({
-base64: fragmentos,
-nome: arquivo.name.replace(/.[^/.]+$/, "") + ".jpg",
-tipo: 'image/jpeg'
-});
-};
-};
-reader.readAsDataURL(arquivo);
-});
-promessas.push(processarEComprimir);
-}
-Promise.all(promessas).then(resultadoLote => {
-dados.fotos = resultadoLote;
-callback(dados);
-});
-}
+                    img.onerror = function() { resolve(null); };
+                    img.src = reader.result;
+                    img.onload = function() {
+                        let maxLargura = 1280; 
+                        let larguraOrig = img.width;
+                        let alturaOrig = img.height;
+                        
+                        if (larguraOrig > maxLargura) {
+                            alturaOrig = Math.round((maxLargura * alturaOrig) / larguraOrig);
+                            larguraOrig = maxLargura;
+                        }
+                        let canvas = document.createElement('canvas');
+                        canvas.width = larguraOrig;
+                        canvas.height = alturaOrig;
+                        let ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, larguraOrig, alturaOrig);
+                        
+                        let base64Comprimido = canvas.toDataURL('image/jpeg', 0.7);
+                        let partesBase64 = base64Comprimido.split(',');
+                        let conteudoBase64 = partesBase64.length > 1 ? partesBase64.at(1) : "";
+                        
+                        resolve({
+                            base64: conteudoBase64, 
+                            nome: arquivo.name.replace(/\.[^/.]+$/, "") + ".jpg",
+                            tipo: 'image/jpeg'
+                        });
+                    };
+                };
+                reader.readAsDataURL(arquivo);
+            });
+            promessas.push(processarEComprimir);
+        }
+
+        Promise.all(promessas).then(resultadoLote => {
+            dados.fotos = resultadoLote.filter(item => item && item.base64);
+            callback(dados);
+        });
+    }
+
     function gerarTextoRDO(d) {
         let msgPronta = "";
         let dataFormatada = "";
